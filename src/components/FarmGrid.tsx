@@ -5,7 +5,7 @@ export function FarmGrid() {
   const { state, selectedCellId, animatingCellId, selectCell } = useGame();
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 w-full max-w-2xl mx-auto">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-4 pb-4 w-full max-w-2xl mx-auto">
       {state.cells.map(cell => (
         <FarmCell
           key={cell.id}
