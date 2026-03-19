@@ -3,20 +3,49 @@ import { Link } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { FarmGrid } from '../components/FarmGrid';
 import { ActionButtons } from '../components/ActionButtons';
+import { GaugeMode } from '../components/GrowthGauge';
 
 export function FarmPage() {
   const { resetGame } = useGame();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [gaugeMode, setGaugeMode] = useState<GaugeMode>('stage');
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-52px)]">
-      {/* 畑グリッド */}
-      <div className="flex-1 flex items-center justify-center px-2 py-3">
-        <FarmGrid />
+
+      {/* ゲージモード切り替え */}
+      <div className="flex justify-center pt-3 pb-1">
+        <div className="flex items-center gap-1 bg-black/10 rounded-full p-0.5 text-xs">
+          <button
+            onClick={() => setGaugeMode('total')}
+            className={`px-3 py-1 rounded-full transition-all duration-200 font-medium ${
+              gaugeMode === 'total'
+                ? 'bg-farm-green-dark text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            全体ゲージ
+          </button>
+          <button
+            onClick={() => setGaugeMode('stage')}
+            className={`px-3 py-1 rounded-full transition-all duration-200 font-medium ${
+              gaugeMode === 'stage'
+                ? 'bg-farm-green-dark text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            段階ゲージ
+          </button>
+        </div>
       </div>
 
-      {/* アクションエリア */}
-      <div className="sticky bottom-0 bg-farm-bg/90 backdrop-blur-sm border-t border-gray-200 pb-safe">
+      {/* 畑グリッド */}
+      <div className="flex-1 flex items-center justify-center px-2 py-2">
+        <FarmGrid gaugeMode={gaugeMode} />
+      </div>
+
+      {/* アクションエリア（z-30 でマスのラベルより必ず前面） */}
+      <div className="sticky bottom-0 z-30 bg-farm-bg/90 backdrop-blur-sm border-t border-gray-200 pb-safe">
         <ActionButtons />
 
         <div className="px-4 pb-4 max-w-lg mx-auto flex gap-3">

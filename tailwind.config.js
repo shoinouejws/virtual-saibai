@@ -38,12 +38,17 @@ export default {
           '0%, 100%': { boxShadow: '0 0 4px 2px rgba(255, 215, 0, 0.3)' },
           '50%': { boxShadow: '0 0 12px 4px rgba(255, 215, 0, 0.6)' },
         },
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.55', transform: 'scale(1)' },
+          '50%': { opacity: '0.9', transform: 'scale(1.15)' },
+        },
       },
       animation: {
         'bounce-grow': 'bounce-grow 0.5s ease-in-out',
         'harvest-pop': 'harvest-pop 0.5s ease-in-out forwards',
         'fade-in-down': 'fade-in-down 0.3s ease-out',
         'sparkle': 'sparkle 1.5s ease-in-out infinite',
+        'glow-pulse': 'glow-pulse 1.8s ease-in-out infinite',
       },
     },
   },
