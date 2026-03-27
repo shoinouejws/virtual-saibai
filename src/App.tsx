@@ -6,6 +6,7 @@ import { FarmPage } from './pages/FarmPage';
 import { ShopPage } from './pages/ShopPage';
 import { HarvestListPage } from './pages/HarvestListPage';
 import { EventMenuPage } from './pages/EventMenuPage';
+import { CellDetailPage } from './pages/CellDetailPage';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Notification />
           <Routes>
             <Route path="/" element={<FarmPage />} />
+            <Route path="/cell/:id" element={<CellDetailPage />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/harvest" element={<HarvestListPage />} />
             <Route path="/events" element={<EventMenuPage />} />

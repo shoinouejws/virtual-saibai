@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { FarmGrid } from '../components/FarmGrid';
-import { ActionButtons } from '../components/ActionButtons';
 import { GaugeMode } from '../components/GrowthGauge';
 
 export function FarmPage() {
@@ -39,16 +38,14 @@ export function FarmPage() {
         </div>
       </div>
 
-      {/* 畑グリッド */}
+      {/* 畑グリッド（マスをタップ → セル詳細ページへ） */}
       <div className="flex-1 flex items-center justify-center px-2 py-2">
         <FarmGrid gaugeMode={gaugeMode} />
       </div>
 
-      {/* アクションエリア（z-30 でマスのラベルより必ず前面） */}
+      {/* 下部ナビゲーション */}
       <div className="sticky bottom-0 z-30 bg-farm-bg/90 backdrop-blur-sm border-t border-gray-200 pb-safe">
-        <ActionButtons />
-
-        <div className="px-4 pb-4 max-w-lg mx-auto flex gap-3">
+        <div className="px-4 py-3 max-w-lg mx-auto flex gap-3">
           <Link
             to="/shop"
             className="flex-1 block text-center py-3 rounded-xl
@@ -71,7 +68,7 @@ export function FarmPage() {
               bg-gray-400 text-white font-bold text-sm
               hover:bg-gray-500 active:scale-[0.98] transition-all duration-200 shadow-sm"
           >
-            🔄 リセット
+            🔄
           </button>
         </div>
       </div>

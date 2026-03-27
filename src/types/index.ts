@@ -1,38 +1,111 @@
 export type CellStatus = 'empty' | 'tilled' | 'planted' | 'growing' | 'harvestable';
-
 export type CropType = 'tomato' | 'strawberry';
+export type CropModelType = 'simple' | 'advanced';
+export type QualityRank = 'A' | 'B' | 'C' | 'D';
+export type ActionDegree = 'light' | 'normal' | 'heavy';
 
-export type ActionType = 'till' | 'plant' | 'water' | 'fertilize' | 'harvest';
-
-export interface FarmCellState {
-  id: number;
-  status: CellStatus;
-  crop: CropType | null;
+// シンプルモデル（トマト用）の成長状態
+export interface SimpleCropState {
+  modelType: 'simple';
   growthPoints: number;
   maxGrowthPoints: number;
   growthStage: number;
   maxGrowthStage: number;
 }
 
+// アドバンスドモデル（いちご用）の成長状態
+// 各パラメーターの詳細は strawberry_progress_design.md セクション2を参照
+export interface AdvancedCropState {
+  modelType: 'advanced';
+  cultivationStage: number;    // 1〜8
+  daysInStage: number;         // 現在ステージに入ってからの日数
+  health: number;              // 健全度 0〜100
+  moisture: number;            // 水分 0〜100
+  nutrition: number;           // 栄養 0〜100
+  stress: number;              // ストレス 0〜100
+  pestRisk: number;            // 害虫リスク 0〜100
+  diseaseRisk: number;         // 病気リスク 0〜100
+  weedAmount: number;          // 雑草量 0〜100
+  rotRisk: number;             // 腐りやすさ 0〜100
+  stageProgress: number;       // ステージ進行度 0〜100
+  flowerCount: number;         // 花の数
+  fruitCount: number;          // 実の数
+  fruitSize: number;           // 実の大きさ 0〜100
+  sweetness: number;           // 甘さ 0〜100
+  coloring: number;            // 色づき 0〜100
+  qualityDamage: number;       // 品質被害蓄積 0〜100
+  qualityBonus: number;        // 品質補正（摘花・摘果ボーナス）
+  overripeRisk: number;        // 熟しすぎリスク 0〜100（ステージ8で使用）
+  // ステージ固有フラグ
+  isTilled: boolean;           // 耕し済み（ステージ1）
+  hasRidge: boolean;           // 畝あり（ステージ1）
+  hasMulch: boolean;           // マルチ（ビニールシート）あり
+  isPlanted: boolean;          // 定植済み（ステージ2）
+  rootEstablishment: number;   // 根付き度 0〜100（ステージ2）
+  // 当日のアクション追跡
+  todayPollinated: boolean;    // 受粉補助をした
+  todayPollinationRate: number; // 当日の受粉成功率%（50ベース）
+  // UI用
+  dailyAdvice: string | null;        // デイリーアドバイス
+  pendingStageTransition: boolean;   // ステージ遷移モーダル表示フラグ
+}
+
+export interface FarmCellState {
+  id: number;
+  status: CellStatus;
+  crop: CropType | null;
+  cropState: SimpleCropState | AdvancedCropState | null;
+}
+
 export interface HarvestRecord {
   crop: CropType;
   harvestedAt: string;
   exchangeQuantity: number;
+  // アドバンスドモデル用
+  qualityRank?: QualityRank;
+  qualityScore?: number;
+  fruitCount?: number;
+  totalWeight?: number;
+  sweetness?: number;
 }
 
 export interface GameState {
   fertilizer: number;
+  insecticide: number;
+  fungicide: number;
+  temperatureSheet: number;
   farmSize: number;
   cells: FarmCellState[];
   harvestLog: HarvestRecord[];
+  lastLoginDate: string | null;
+  currentGameDate: string | null;
 }
 
 export interface CropDefinition {
   type: CropType;
   name: string;
-  maxGrowthPoints: number;
-  growthStages: number;
-  stageImages: string[];
+  modelType: CropModelType;
+  maxGrowthPoints?: number;    // シンプルモデル用
+  growthStages: number;        // 表示用段階数
+  stageImages: string[];       // 各段階の画像パス
+  stageNames?: string[];       // 各段階の名称（アドバンスドモデル用）
   exchangeQuantityRange: { min: number; max: number };
   exchangeUnit: string;
+}
+
+// ヘルパー: セルの表示用ステージ番号を取得
+export function getCellDisplayStage(cell: FarmCellState): number {
+  if (!cell.cropState) return 0;
+  if (cell.cropState.modelType === 'simple') return cell.cropState.growthStage;
+  return cell.cropState.cultivationStage;
+}
+
+// ヘルパー: セルのステージ進行度(0〜100)を取得
+export function getCellStageProgress(cell: FarmCellState): number {
+  if (!cell.cropState) return 0;
+  if (cell.cropState.modelType === 'simple') {
+    const { growthPoints, maxGrowthPoints } = cell.cropState;
+    return maxGrowthPoints > 0 ? Math.min((growthPoints / maxGrowthPoints) * 100, 100) : 0;
+  }
+  return cell.cropState.stageProgress;
 }

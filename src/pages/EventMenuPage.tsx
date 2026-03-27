@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
+import { useGame } from '../context/GameContext';
+import { EventId } from '../utils/strawberryEngine';
 
 interface EventItem {
-  id: string;
+  eventId: EventId;
   icon: string;
   name: string;
   description: string;
   effect: string;
-  type: 'good' | 'bad';
+  type: 'good' | 'bad' | 'neutral';
 }
 
 interface EventCategory {
@@ -23,75 +25,71 @@ const EVENT_CATEGORIES: EventCategory[] = [
     label: '天候イベント',
     events: [
       {
-        id: 'rain',
-        icon: '🌧️',
-        name: '恵みの雨',
-        description: '大地を潤す恵みの雨が降った！',
-        effect: '全マスに水やり効果（+1pt）',
-        type: 'good',
+        eventId: 'rain',
+        icon: '🌧️', name: '雨', type: 'good',
+        description: '雨が降った。土が湿る。',
+        effect: '水分 +10',
       },
       {
-        id: 'heatwave',
-        icon: '☀️',
-        name: '猛暑日',
-        description: '厳しい暑さで土が乾燥してしまった…',
-        effect: '成長中の全作物の成長ポイント-1',
-        type: 'bad',
+        eventId: 'longRain',
+        icon: '🌧️', name: '長雨', type: 'bad',
+        description: '雨が続いて土が湿りすぎ気味。',
+        effect: '水分 +20、病気リスク +5〜10',
       },
       {
-        id: 'storm',
-        icon: '⛈️',
-        name: '嵐',
-        description: '強風と豪雨が作物に打撃を与えた！',
-        effect: '全成長中の作物の成長ポイント-2',
-        type: 'bad',
+        eventId: 'highTemp',
+        icon: '☀️', name: '高温', type: 'bad',
+        description: '暑さで株に負担がかかる。',
+        effect: 'ストレス +8〜10、水分 -5〜10',
       },
       {
-        id: 'sunshine',
-        icon: '🌈',
-        name: '快晴続き',
-        description: '晴天が続き光合成が促進された！',
-        effect: '全作物の成長ポイント+2',
-        type: 'good',
+        eventId: 'lowTemp',
+        icon: '❄️', name: '低温', type: 'bad',
+        description: '寒さで成長が鈍る。',
+        effect: 'ストレス +8〜10',
+      },
+      {
+        eventId: 'sunnyContinue',
+        icon: '☀️', name: '晴天続き', type: 'neutral',
+        description: '土が乾きやすい。',
+        effect: '水分 -8',
+      },
+      {
+        eventId: 'lowLight',
+        icon: '🌫️', name: '日照不足', type: 'bad',
+        description: '光合成が弱まる。',
+        effect: '進行度 -5〜8',
+      },
+      {
+        eventId: 'strongWind',
+        icon: '💨', name: '強風', type: 'bad',
+        description: '風で株が揺れる。',
+        effect: 'ストレス +2',
+      },
+      {
+        eventId: 'dryWeather',
+        icon: '🏜️', name: '乾燥', type: 'bad',
+        description: '土が乾燥している。',
+        effect: '水分 -10',
       },
     ],
   },
   {
     id: 'pest',
     icon: '🐛',
-    label: '虫害イベント',
+    label: '害虫・病気イベント',
     events: [
       {
-        id: 'caterpillar',
-        icon: '🐛',
-        name: 'アオムシ発生',
-        description: '葉を食い荒らすアオムシが現れた！',
-        effect: 'ランダムな作物1マスの成長ポイント-2',
-        type: 'bad',
+        eventId: 'pest',
+        icon: '🐛', name: '害虫発生', type: 'bad',
+        description: '害虫が発生した。',
+        effect: '害虫リスク +8〜12',
       },
       {
-        id: 'locust',
-        icon: '🦗',
-        name: 'バッタの大群',
-        description: 'バッタの大群が畑を襲来！',
-        effect: '全成長中の作物の成長ポイント-1',
-        type: 'bad',
-      },
-      {
-        id: 'bee',
-        icon: '🐝',
-        name: 'ミツバチ来訪',
-        description: 'ミツバチが花粉を運んで受粉を助けてくれた！',
-        effect: '開花中（ステージ3）の作物の成長ポイント+2',
-        type: 'good',
-      },
-      {
-        id: 'slug',
-        icon: '🐌',
-        name: 'ナメクジの害',
-        description: '夜のうちにナメクジが若芽を食べてしまった…',
-        effect: '植えたばかりの作物の成長ポイント-1',
-        type: 'bad',
+        eventId: 'disease',
+        icon: '🦠', name: '病気発生', type: 'bad',
+        description: '病気の症状が現れた。',
+        effect: '病気リスク +10〜12',
       },
     ],
   },
@@ -101,65 +99,26 @@ const EVENT_CATEGORIES: EventCategory[] = [
     label: '鳥害イベント',
     events: [
       {
-        id: 'sparrow',
-        icon: '🐦',
-        name: 'スズメの群れ',
-        description: 'スズメが群れをなして種をついばんでしまった！',
-        effect: '種まき直後の作物が1段階後退',
-        type: 'bad',
-      },
-      {
-        id: 'crow',
-        icon: '🦅',
-        name: 'カラスの侵入',
-        description: '賢いカラスが熟した実を狙ってきた！',
-        effect: '収穫可能な作物が1段階後退',
-        type: 'bad',
-      },
-      {
-        id: 'swan',
-        icon: '🦢',
-        name: '白鳥の来訪',
-        description: '幸運を運ぶ白鳥が畑に舞い降りた！',
-        effect: 'ランダムな成長中の作物+3pt',
-        type: 'good',
-      },
-    ],
-  },
-  {
-    id: 'lucky',
-    icon: '🍀',
-    label: '幸運イベント',
-    events: [
-      {
-        id: 'blessing',
-        icon: '⭐',
-        name: '豊穣の加護',
-        description: '豊穣の女神が畑に祝福を与えてくれた！',
-        effect: '全作物の成長ポイント+3',
-        type: 'good',
-      },
-      {
-        id: 'fullmoon',
-        icon: '🌟',
-        name: '満月の夜',
-        description: '満月の月光が作物の成長を促進した！',
-        effect: '全作物の成長ポイント+2',
-        type: 'good',
-      },
-      {
-        id: 'clover',
-        icon: '🍀',
-        name: '四つ葉のクローバー',
-        description: '畑で四つ葉のクローバーを見つけた！',
-        effect: '次の収穫の交換個数+5',
-        type: 'good',
+        eventId: 'birdDamage',
+        icon: '🐦', name: '鳥害・虫害', type: 'bad',
+        description: '実が傷つけられた。成熟期以降に発生。',
+        effect: '品質被害蓄積 +5〜8',
       },
     ],
   },
 ];
 
 export function EventMenuPage() {
+  const { state, applyGameEvent } = useGame();
+
+  const hasAdvancedCells = state.cells.some(
+    c => c.cropState?.modelType === 'advanced'
+  );
+
+  const handleEvent = (eventId: EventId) => {
+    applyGameEvent('all', eventId);
+  };
+
   return (
     <div className="min-h-[calc(100dvh-52px)] bg-farm-bg">
       {/* ページヘッダー */}
@@ -172,72 +131,67 @@ export function EventMenuPage() {
           ← 畑に戻る
         </Link>
         <h1 className="flex-1 text-center font-bold text-farm-text text-base pr-16">
-          ⚡ イベント
+          ⚡ イベント（デバッグ）
         </h1>
       </div>
 
       {/* 説明文 */}
       <div className="mx-4 mt-4 mb-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-        <p className="font-semibold mb-0.5">🧪 シミュレーション機能</p>
-        <p>様々なイベントを手動で発生させて、作物への影響をシミュレーションできます。</p>
-        <p className="mt-1 text-amber-500">※ イベント効果は近日実装予定です</p>
+        <p className="font-semibold mb-0.5">🧪 デバッグ用イベントメニュー</p>
+        <p>様々な天候・害虫イベントを手動で発生させ、いちご栽培への影響をシミュレーションできます。</p>
+        {!hasAdvancedCells && (
+          <p className="mt-1.5 text-amber-600 font-medium">⚠️ いちご栽培中のマスがありません。いちごを植えてからお試しください。</p>
+        )}
       </div>
 
       {/* イベントカテゴリ一覧 */}
       <div className="px-4 pb-8 space-y-5 mt-3">
         {EVENT_CATEGORIES.map(category => (
           <div key={category.id}>
-            {/* カテゴリヘッダー */}
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">{category.icon}</span>
               <h2 className="font-bold text-farm-text text-sm">{category.label}</h2>
             </div>
 
-            {/* イベントカード一覧 */}
             <div className="space-y-2">
               {category.events.map(event => (
                 <div
-                  key={event.id}
+                  key={event.eventId}
                   className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
                 >
                   <div className="flex items-stretch">
-                    {/* 左の色帯 */}
-                    <div
-                      className={`w-1.5 flex-shrink-0 ${
-                        event.type === 'good' ? 'bg-farm-green' : 'bg-red-400'
-                      }`}
-                    />
-
-                    {/* コンテンツ */}
+                    <div className={`w-1.5 flex-shrink-0 ${
+                      event.type === 'good' ? 'bg-farm-green'
+                      : event.type === 'bad' ? 'bg-red-400'
+                      : 'bg-yellow-400'
+                    }`} />
                     <div className="flex items-center gap-3 px-3 py-3 flex-1 min-w-0">
                       <span className="text-2xl flex-shrink-0">{event.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-farm-text text-sm">{event.name}</p>
-                          <span
-                            className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                              event.type === 'good'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-600'
-                            }`}
-                          >
-                            {event.type === 'good' ? '✨ 良' : '⚠️ 悪'}
+                          <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${
+                            event.type === 'good'
+                              ? 'bg-green-100 text-green-700'
+                              : event.type === 'bad'
+                                ? 'bg-red-100 text-red-600'
+                                : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {event.type === 'good' ? '✨ 良' : event.type === 'bad' ? '⚠️ 悪' : '→ 中'}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5 leading-snug">
-                          {event.description}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1 font-medium">
-                          効果: {event.effect}
-                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">{event.description}</p>
+                        <p className="text-xs text-gray-400 mt-0.5 font-medium">効果: {event.effect}</p>
                       </div>
 
-                      {/* 発動ボタン */}
                       <button
-                        disabled
-                        className="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold
-                          bg-gray-200 text-gray-400 cursor-not-allowed"
-                        title="近日実装予定"
+                        onClick={() => handleEvent(event.eventId)}
+                        disabled={!hasAdvancedCells}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all
+                          ${hasAdvancedCells
+                            ? 'bg-purple-500 text-white hover:bg-purple-600 active:scale-95'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                          }`}
                       >
                         発動
                       </button>

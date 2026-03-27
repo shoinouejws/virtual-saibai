@@ -4,14 +4,15 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
   tomato: {
     type: 'tomato',
     name: 'トマト',
+    modelType: 'simple',
     maxGrowthPoints: 15,
     growthStages: 5,
     stageImages: [
-      'assets/crops/tomato_stage1.png',  // Stage1: 発芽
-      'assets/crops/tomato_stage2.png',  // Stage2: 双葉（新規）
-      'assets/crops/tomato-2.png',       // Stage3: 成長した芽
-      'assets/crops/tomato-3.png',       // Stage4: 開花
-      'assets/crops/tomato-4.png',       // Stage5: 結実
+      'assets/crops/tomato_stage1.png',
+      'assets/crops/tomato_stage2.png',
+      'assets/crops/tomato-2.png',
+      'assets/crops/tomato-3.png',
+      'assets/crops/tomato-4.png',
     ],
     exchangeQuantityRange: { min: 3, max: 6 },
     exchangeUnit: '玉',
@@ -19,13 +20,27 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
   strawberry: {
     type: 'strawberry',
     name: 'いちご',
-    maxGrowthPoints: 12,
-    growthStages: 4,
+    modelType: 'advanced',
+    growthStages: 8,
     stageImages: [
-      'assets/crops/strawberry-1.png',
-      'assets/crops/strawberry-2.png',
-      'assets/crops/strawberry-3.png',
-      'assets/crops/strawberry-4_real.png',
+      'assets/crops/strawberry-1.png',    // S1: 栽培準備期
+      'assets/crops/strawberry-2.png',    // S2: 定植・活着期
+      'assets/crops/strawberry-3.png',    // S3: 葉成長期
+      'assets/crops/strawberry-4_real.png', // S4: 花芽形成期
+      'assets/crops/strawberry-5.png',    // S5: 開花期（未作成→絵文字フォールバック）
+      'assets/crops/strawberry-6.png',    // S6: 果実肥大期（未作成→絵文字フォールバック）
+      'assets/crops/strawberry-7.png',    // S7: 成熟期（未作成→絵文字フォールバック）
+      'assets/crops/strawberry-8.png',    // S8: 収穫可能期（未作成→絵文字フォールバック）
+    ],
+    stageNames: [
+      '栽培準備期',
+      '定植・活着期',
+      '葉成長期',
+      '花芽形成期',
+      '開花期',
+      '果実肥大期',
+      '成熟期',
+      '収穫可能期',
     ],
     exchangeQuantityRange: { min: 10, max: 20 },
     exchangeUnit: '粒',
@@ -34,7 +49,7 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
 
 export const CROP_STAGE_EMOJI: Record<CropType, string[]> = {
   tomato: ['🌱', '🌿', '🍃', '🌼', '🍅'],
-  strawberry: ['🌱', '🍀', '🌸', '🍓'],
+  strawberry: ['🌱', '🏠', '🍃', '💮', '🌸', '🫐', '🍓', '🍓'],
 };
 
 export const CROP_LIST: CropType[] = ['tomato', 'strawberry'];

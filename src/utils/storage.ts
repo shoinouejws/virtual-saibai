@@ -1,10 +1,17 @@
 import { GameState } from '../types';
 
 const STORAGE_KEY = 'virtual-saibai-game';
+const SCHEMA_VERSION = 3; // FarmCellState を cropState ユニオン型に移行
+
+interface VersionedState {
+  version: number;
+  state: GameState;
+}
 
 export function saveGame(state: GameState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const versioned: VersionedState = { version: SCHEMA_VERSION, state };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(versioned));
   } catch {
     // localStorage full or unavailable
   }
@@ -12,9 +19,18 @@ export function saveGame(state: GameState): void {
 
 export function loadGame(): GameState | null {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return null;
-    return JSON.parse(data) as GameState;
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+
+    // バージョンチェック: スキーマが変わっていたらリセット
+    if (!parsed.version || parsed.version < SCHEMA_VERSION) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+
+    return parsed.state as GameState;
   } catch {
     return null;
   }

@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { FarmCell } from './FarmCell';
 import { GaugeMode } from './GrowthGauge';
@@ -7,7 +8,8 @@ interface Props {
 }
 
 export function FarmGrid({ gaugeMode }: Props) {
-  const { state, selectedCellId, animatingCellId, growthAnimation, selectCell } = useGame();
+  const { state, animatingCellId, growthAnimation } = useGame();
+  const navigate = useNavigate();
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-4 pb-4 w-full max-w-2xl mx-auto">
@@ -18,11 +20,10 @@ export function FarmGrid({ gaugeMode }: Props) {
           <FarmCell
             key={cell.id}
             cell={cell}
-            isSelected={selectedCellId === cell.id}
             isAnimating={animatingCellId === cell.id}
             gaugeMode={gaugeMode}
             growthAnim={cellGrowthAnim}
-            onSelect={() => selectCell(cell.id)}
+            onSelect={() => navigate(`/cell/${cell.id}`)}
           />
         );
       })}
