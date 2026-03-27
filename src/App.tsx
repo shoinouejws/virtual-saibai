@@ -5,6 +5,7 @@ import { Notification } from './components/Notification';
 import { FarmPage } from './pages/FarmPage';
 import { ShopPage } from './pages/ShopPage';
 import { HarvestListPage } from './pages/HarvestListPage';
+import { EventMenuPage } from './pages/EventMenuPage';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
             <Route path="/" element={<FarmPage />} />
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/harvest" element={<HarvestListPage />} />
+            <Route path="/events" element={<EventMenuPage />} />
           </Routes>
         </div>
       </HashRouter>

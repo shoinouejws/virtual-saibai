@@ -17,16 +17,6 @@ export function FarmPage() {
       <div className="flex justify-center pt-3 pb-1">
         <div className="flex items-center gap-1 bg-black/10 rounded-full p-0.5 text-xs">
           <button
-            onClick={() => setGaugeMode('total')}
-            className={`px-3 py-1 rounded-full transition-all duration-200 font-medium ${
-              gaugeMode === 'total'
-                ? 'bg-farm-green-dark text-white shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            全体ゲージ
-          </button>
-          <button
             onClick={() => setGaugeMode('stage')}
             className={`px-3 py-1 rounded-full transition-all duration-200 font-medium ${
               gaugeMode === 'stage'
@@ -35,6 +25,16 @@ export function FarmPage() {
             }`}
           >
             段階ゲージ
+          </button>
+          <button
+            onClick={() => setGaugeMode('total')}
+            className={`px-3 py-1 rounded-full transition-all duration-200 font-medium ${
+              gaugeMode === 'total'
+                ? 'bg-farm-green-dark text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            全体ゲージ
           </button>
         </div>
       </div>
@@ -56,6 +56,14 @@ export function FarmPage() {
               hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-sm"
           >
             🛒 ショップへ
+          </Link>
+          <Link
+            to="/events"
+            className="flex-1 block text-center py-3 rounded-xl
+              bg-purple-500 text-white font-bold text-sm
+              hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-sm"
+          >
+            ⚡ イベント
           </Link>
           <button
             onClick={() => setShowConfirm(true)}
