@@ -15,20 +15,20 @@ export function ShopPage() {
 
   const items: ShopItem[] = [
     {
-      id: 'fert-5',
+      id: 'fert-250',
       icon: '🧪',
-      name: '肥料 ×5',
-      description: '肥料を5個追加します',
+      name: '肥料 250g',
+      description: '肥料を250g追加します（5回分）',
       price: '¥120',
-      action: () => buyFertilizer(5),
+      action: () => buyFertilizer(250),
     },
     {
-      id: 'fert-15',
+      id: 'fert-750',
       icon: '🧪',
-      name: '肥料 ×15',
-      description: '肥料を15個追加します（お得！）',
+      name: '肥料 750g',
+      description: '肥料を750g追加します（15回分・お得！）',
       price: '¥300',
-      action: () => buyFertilizer(15),
+      action: () => buyFertilizer(750),
     },
     {
       id: 'expand',
@@ -61,7 +61,7 @@ export function ShopPage() {
           <div>
             <div className="text-2xl">🧪</div>
             <div className="text-xs text-gray-500 mt-1">肥料在庫</div>
-            <div className="font-bold text-farm-text">{state.fertilizer}個</div>
+            <div className="font-bold text-farm-text">{state.fertilizer}g</div>
           </div>
           <div>
             <div className="text-2xl">🌾</div>

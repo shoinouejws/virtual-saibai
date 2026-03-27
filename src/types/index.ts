@@ -17,6 +17,7 @@ export interface FarmCellState {
 export interface HarvestRecord {
   crop: CropType;
   harvestedAt: string;
+  exchangeQuantity: number;
 }
 
 export interface GameState {
@@ -32,4 +33,6 @@ export interface CropDefinition {
   maxGrowthPoints: number;
   growthStages: number;
   stageImages: string[];
+  exchangeQuantityRange: { min: number; max: number };
+  exchangeUnit: string;
 }

@@ -24,7 +24,7 @@ function createEmptyCell(id: number): FarmCellState {
 
 function createInitialState(): GameState {
   return {
-    fertilizer: 3,
+    fertilizer: 150,
     farmSize: 4,
     cells: Array.from({ length: 4 }, (_, i) => createEmptyCell(i)),
     harvestLog: [],
@@ -187,7 +187,7 @@ export function useGameState() {
     setState(prev => {
       const cell = prev.cells.find(c => c.id === cellId);
       if (!cell || (cell.status !== 'planted' && cell.status !== 'growing')) return prev;
-      if (prev.fertilizer <= 0) {
+      if (prev.fertilizer < 50) {
         message = '⚠️ 肥料がありません！ショップで購入しましょう';
         return prev;
       }
@@ -208,7 +208,7 @@ export function useGameState() {
 
       return {
         ...prev,
-        fertilizer: prev.fertilizer - 1,
+        fertilizer: prev.fertilizer - 50,
         cells: prev.cells.map(c =>
           c.id === cellId
             ? {
@@ -232,12 +232,15 @@ export function useGameState() {
     setState(prev => {
       const cell = prev.cells.find(c => c.id === cellId);
       if (!cell || cell.status !== 'harvestable' || !cell.crop) return prev;
-      cropName = CROP_DEFINITIONS[cell.crop].name;
+      const cropDef = CROP_DEFINITIONS[cell.crop];
+      cropName = cropDef.name;
+      const { min, max } = cropDef.exchangeQuantityRange;
+      const exchangeQuantity = Math.floor(Math.random() * (max - min + 1)) + min;
       return {
         ...prev,
         harvestLog: [
           ...prev.harvestLog,
-          { crop: cell.crop, harvestedAt: new Date().toISOString() },
+          { crop: cell.crop, harvestedAt: new Date().toISOString(), exchangeQuantity },
         ],
         cells: prev.cells.map(c =>
           c.id === cellId ? createEmptyCell(cellId) : c
@@ -252,7 +255,7 @@ export function useGameState() {
 
   const buyFertilizer = useCallback((amount: number) => {
     setState(prev => ({ ...prev, fertilizer: prev.fertilizer + amount }));
-    notify(`肥料を${amount}個購入しました！`);
+    notify(`肥料を${amount}g購入しました！`);
   }, [notify]);
 
   const expandFarm = useCallback(() => {

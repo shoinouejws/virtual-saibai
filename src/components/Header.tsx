@@ -10,7 +10,7 @@ export function Header() {
         <h1 className="text-base font-bold tracking-wide">🌱 バーチャル栽培</h1>
         <div className="flex items-center gap-3 text-xs">
           <span className="flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-full">
-            🧪 <span className="font-medium">肥料 {state.fertilizer}個</span>
+            🧪 <span className="font-medium">肥料 {state.fertilizer}g</span>
           </span>
           <Link
             to="/harvest"

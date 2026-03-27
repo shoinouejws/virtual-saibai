@@ -13,6 +13,8 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
       'assets/crops/tomato-3.png',       // Stage4: 開花
       'assets/crops/tomato-4.png',       // Stage5: 結実
     ],
+    exchangeQuantityRange: { min: 3, max: 6 },
+    exchangeUnit: '玉',
   },
   strawberry: {
     type: 'strawberry',
@@ -23,8 +25,10 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
       'assets/crops/strawberry-1.png',
       'assets/crops/strawberry-2.png',
       'assets/crops/strawberry-3.png',
-      'assets/crops/strawberry-4.png',
+      'assets/crops/strawberry-4_real.png',
     ],
+    exchangeQuantityRange: { min: 10, max: 20 },
+    exchangeUnit: '粒',
   },
 };
 

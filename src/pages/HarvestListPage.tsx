@@ -76,7 +76,12 @@ export function HarvestListPage() {
               >
                 <span className="text-3xl">{emoji}</span>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold text-farm-text">{cropDef.name}</div>
+                  <div className="font-bold text-farm-text">
+                    {cropDef.name}
+                    <span className="ml-2 text-farm-green-dark font-semibold">
+                      × {record.exchangeQuantity}{cropDef.exchangeUnit}
+                    </span>
+                  </div>
                   <div className="text-xs text-gray-400">{formatDate(record.harvestedAt)}</div>
                 </div>
                 {isExchanged ? (
