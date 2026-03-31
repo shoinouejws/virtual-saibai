@@ -19,7 +19,7 @@ export function DailyAdvice({ cropState }: Props) {
       }
     `}>
       <h3 className={`text-xs font-bold mb-1 ${isWarning ? 'text-red-500' : 'text-amber-600'}`}>
-        💡 ひとことアドバイス
+        💡 今日のひとことアドバイス
       </h3>
       <p className={`text-sm font-medium ${isWarning ? 'text-red-700' : 'text-amber-800'}`}>
         {advice}

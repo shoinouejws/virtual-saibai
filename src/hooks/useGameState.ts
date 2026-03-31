@@ -481,42 +481,43 @@ export function useGameState() {
   // ===== 収穫 =====
 
   const harvest = useCallback((cellId: number) => {
-    let resultInfo: HarvestResultInfo | null = null;
+    const cell = state.cells.find(c => c.id === cellId);
+    if (!cell || cell.status !== 'harvestable' || !cell.crop) return;
+
+    const cropDef = CROP_DEFINITIONS[cell.crop];
+    let harvestRecord: HarvestRecord;
+    let resultInfo: HarvestResultInfo;
+
+    if (cell.cropState?.modelType === 'advanced') {
+      const result = calculateHarvestResult(cell.cropState);
+      harvestRecord = {
+        crop: cell.crop,
+        harvestedAt: new Date().toISOString(),
+        ...result.record,
+      };
+      resultInfo = {
+        record: harvestRecord,
+        fruitCount: result.fruitCount,
+        totalWeight: result.totalWeight,
+        qualityScore: result.qualityScore,
+        cropName: cropDef.name,
+      };
+    } else {
+      const { min, max } = cropDef.exchangeQuantityRange;
+      const exchangeQuantity = Math.floor(Math.random() * (max - min + 1)) + min;
+      harvestRecord = { crop: cell.crop, harvestedAt: new Date().toISOString(), exchangeQuantity };
+      resultInfo = {
+        record: harvestRecord,
+        fruitCount: exchangeQuantity,
+        totalWeight: 0,
+        qualityScore: 0,
+        cropName: cropDef.name,
+      };
+    }
 
     setState(prev => {
-      const cell = prev.cells.find(c => c.id === cellId);
-      if (!cell || cell.status !== 'harvestable' || !cell.crop) return prev;
-
-      const cropDef = CROP_DEFINITIONS[cell.crop];
-      let harvestRecord: HarvestRecord;
-
-      if (cell.cropState?.modelType === 'advanced') {
-        const result = calculateHarvestResult(cell.cropState);
-        harvestRecord = {
-          crop: cell.crop,
-          harvestedAt: new Date().toISOString(),
-          ...result.record,
-        };
-        resultInfo = {
-          record: harvestRecord,
-          fruitCount: result.fruitCount,
-          totalWeight: result.totalWeight,
-          qualityScore: result.qualityScore,
-          cropName: cropDef.name,
-        };
-      } else {
-        const { min, max } = cropDef.exchangeQuantityRange;
-        const exchangeQuantity = Math.floor(Math.random() * (max - min + 1)) + min;
-        harvestRecord = { crop: cell.crop, harvestedAt: new Date().toISOString(), exchangeQuantity };
-        resultInfo = {
-          record: harvestRecord,
-          fruitCount: exchangeQuantity,
-          totalWeight: 0,
-          qualityScore: 0,
-          cropName: cropDef.name,
-        };
-      }
-
+      const prevCell = prev.cells.find(c => c.id === cellId);
+      if (!prevCell || prevCell.status !== 'harvestable' || !prevCell.crop) return prev;
       return {
         ...prev,
         harvestLog: [...prev.harvestLog, harvestRecord],
@@ -524,11 +525,9 @@ export function useGameState() {
       };
     });
 
+    setHarvestResult(resultInfo);
     triggerAnimation(cellId);
-    if (resultInfo) {
-      setHarvestResult(resultInfo);
-    }
-  }, [triggerAnimation]);
+  }, [state, triggerAnimation]);
 
   // ===== イベント適用（デバッグ・日次ランダム） =====
 
