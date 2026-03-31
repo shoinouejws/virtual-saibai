@@ -8,7 +8,8 @@ import { DailyAdvice } from '../components/DailyAdvice';
 import { ActionButtons } from '../components/ActionButtons';
 import { StageTransitionModal } from '../components/StageTransitionModal';
 import { HarvestResultModal } from '../components/HarvestResultModal';
-import { getCellDisplayStage } from '../types';
+import { getCellDisplayStage, FarmCellState } from '../types';
+import { getSoilImage } from '../utils/soilImage';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -20,9 +21,15 @@ const STATUS_LABELS: Record<string, string> = {
   harvestable: '収穫OK！',
 };
 
-function getSoilImage(status: string): string {
-  if (status === 'empty') return `${BASE}assets/crops/soil/soil-empty.png`;
-  return `${BASE}assets/crops/soil/soil-tilled.png`;
+// 作物画像を表示すべきか（ステージ1・苗植え前は非表示）
+function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean {
+  if (!cell.crop || displayStage <= 0) return false;
+  if (cell.cropState?.modelType === 'advanced') {
+    const cs = cell.cropState;
+    if (cs.cultivationStage === 1) return false;
+    if (cs.cultivationStage === 2 && !cs.isPlanted) return false;
+  }
+  return true;
 }
 
 export function CellDetailPage() {
@@ -53,6 +60,7 @@ export function CellDetailPage() {
     : `マス${cellId + 1}`;
 
   const hasCrop = cell.status !== 'empty' && cell.status !== 'tilled';
+  const showCropImage = shouldShowCropImage(cell, displayStage);
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-52px)] pb-24">
@@ -101,7 +109,7 @@ export function CellDetailPage() {
         <div className="relative rounded-3xl overflow-hidden shadow-md aspect-square max-h-80 w-full">
           {/* 土の背景画像（常に表示） */}
           <img
-            src={getSoilImage(cell.status)}
+            src={getSoilImage(cell)}
             alt="土"
             className="absolute inset-0 w-full h-full object-cover"
             onError={e => {
@@ -109,11 +117,11 @@ export function CellDetailPage() {
               if (!img.src.includes('soil-empty')) img.src = `${BASE}assets/crops/soil/soil-empty.png`;
             }}
           />
-          {/* 作物画像（作物がある場合） */}
-          {hasCrop && cell.crop && displayStage > 0 && (
+          {/* 作物画像（ステージ1・苗植え前は非表示） */}
+          {hasCrop && showCropImage && (
             <div className="absolute inset-0 flex items-center justify-center">
               <CropDisplay
-                crop={cell.crop}
+                crop={cell.crop!}
                 stage={displayStage}
                 status={cell.status}
                 className="w-full h-full"

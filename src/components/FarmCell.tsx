@@ -3,6 +3,7 @@ import { CROP_DEFINITIONS } from '../data/crops';
 import { CropDisplay } from './CropDisplay';
 import { GrowthGauge, GaugeMode } from './GrowthGauge';
 import { GrowthAnimationInfo } from '../hooks/useGameState';
+import { getSoilImage } from '../utils/soilImage';
 
 interface Props {
   cell: FarmCellState;
@@ -22,14 +23,15 @@ const STATUS_LABELS: Record<string, string> = {
   harvestable: '収穫OK！',
 };
 
-function getSoilImage(cell: FarmCellState): string {
-  if (cell.status === 'empty') return `${BASE}assets/crops/soil/soil-empty.png`;
+// 作物画像を表示すべきか（ステージ1・苗植え前は非表示）
+function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean {
+  if (!cell.crop || displayStage <= 0) return false;
   if (cell.cropState?.modelType === 'advanced') {
     const cs = cell.cropState;
-    if (cs.hasMulch) return `${BASE}assets/crops/soil/soil-mulched.png`;
-    if (cs.hasRidge) return `${BASE}assets/crops/soil/soil-ridged.png`;
+    if (cs.cultivationStage === 1) return false;
+    if (cs.cultivationStage === 2 && !cs.isPlanted) return false;
   }
-  return `${BASE}assets/crops/soil/soil-tilled.png`;
+  return true;
 }
 
 function getGrowthAnimSrc(anim: GrowthAnimationInfo): string {
@@ -45,6 +47,7 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
   const showGauge = hasCrop(cell.status) && cell.crop !== null;
   const cropName = cell.crop ? CROP_DEFINITIONS[cell.crop].name : null;
   const displayStage = getCellDisplayStage(cell);
+  const showCropImage = shouldShowCropImage(cell, displayStage);
 
   // いちごのステージ表示ラベル
   const stageLabel = (() => {
@@ -103,8 +106,8 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
           relative z-10 flex items-center justify-center w-full flex-1
           ${isAnimating ? 'animate-bounce-grow' : ''}
         `}>
-          {cell.crop && displayStage > 0 && (
-            <CropDisplay crop={cell.crop} stage={displayStage} status={cell.status} />
+          {showCropImage && (
+            <CropDisplay crop={cell.crop!} stage={displayStage} status={cell.status} />
           )}
         </div>
 

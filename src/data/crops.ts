@@ -23,7 +23,7 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
     modelType: 'advanced',
     growthStages: 8,
     stageImages: [
-      'assets/crops/strawberry/strawberry-1.png',    // S1: 栽培準備期
+      'assets/crops/soil/soil-ridged.png',    // S1: 栽培準備期
       'assets/crops/strawberry/strawberry-2.png',    // S2: 定植・活着期
       'assets/crops/strawberry/strawberry-3.png',    // S3: 葉成長期
       'assets/crops/strawberry/strawberry-4.png',    // S4: 花芽形成期
