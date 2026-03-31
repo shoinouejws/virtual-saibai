@@ -54,7 +54,7 @@ export function ActionButtons({ cell }: Props) {
     return (
       <>
         <ActionGrid>
-          <ActionBtn label="植える" icon="🌱" onClick={() => setShowCropSelector(true)} highlight />
+          <ActionBtn label="作物を選択" icon="🌱" onClick={() => setShowCropSelector(true)} highlight />
         </ActionGrid>
         {showCropSelector && (
           <CropSelector
@@ -122,14 +122,21 @@ export function ActionButtons({ cell }: Props) {
 
     // ===== ステージ別アクション =====
     switch (stage) {
-      case 1: // 栽培準備期
-        if (!cs.isTilled) actions.push({ key: 'till', label: '土を整える', icon: '⛏️', disabled: false, onPress: () => game.strawberryTillSoil(cellId) });
-        if (!cs.hasRidge) actions.push({ key: 'ridge', label: '畝を作る', icon: '🏡', disabled: false, onPress: () => game.strawberryMakeRidge(cellId), highlight: true });
-        if (!cs.hasMulch) actions.push({ key: 'mulch', label: 'マルチを敷く', icon: '🛡️', disabled: false, onPress: () => game.strawberryLayMulch(cellId) });
-        actions.push({ key: 'baseFert', label: '元肥を入れる', icon: '🧪', disabled: false, onPress: () => game.strawberryBaseFertilizer(cellId) });
+      case 1: { // 栽培準備期
+        // 土を整える: マルチ後は不可（覆われた土は耕せない）
+        if (!cs.isTilled) actions.push({ key: 'till', label: '土を整える', icon: '⛏️', disabled: cs.hasMulch, onPress: () => game.strawberryTillSoil(cellId), highlight: !cs.hasMulch });
+        // 元肥は土に混ぜ込む作業のためマルチ後は不可
+        if (!cs.hasMulch) actions.push({ key: 'baseFert', label: '元肥を入れる', icon: '🧪', disabled: false, onPress: () => game.strawberryBaseFertilizer(cellId) });
+        // 畝はマルチ後は作れない（物理的に困難）
+        if (!cs.hasRidge) actions.push({ key: 'ridge', label: '畝を作る', icon: '🏡', disabled: cs.hasMulch, onPress: () => game.strawberryMakeRidge(cellId) });
+        // マルチは耕した後のみ敷設可能（耕す前に敷くと詰むため設計上制限）
+        if (cs.isTilled && !cs.hasMulch) actions.push({ key: 'mulch', label: 'マルチを敷く', icon: '🛡️', disabled: false, onPress: () => game.strawberryLayMulch(cellId) });
+        // 苗を植える: 耕してから（isTilled）が必須。植えるとステージ2へ即時遷移
+        actions.push({ key: 'plant', label: '苗を植える', icon: '🌱', disabled: !cs.isTilled, onPress: () => game.strawberryPlantSeedling(cellId), highlight: cs.isTilled });
         actions.push({ key: 'water', label: '水やり', icon: '💧', disabled: cs.moisture >= 100, hasDegree: true, onPress: d => game.strawberryWater(cellId, d ?? 'normal') });
         actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         break;
+      }
 
       case 2: // 定植・活着期
         if (!cs.isPlanted) actions.push({ key: 'plant', label: '苗を植える', icon: '🌱', disabled: false, onPress: () => game.strawberryPlantSeedling(cellId), highlight: true });

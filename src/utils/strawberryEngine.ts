@@ -44,6 +44,20 @@ export function createInitialAdvancedCropState(): AdvancedCropState {
   };
 }
 
+// ===== ステージ1: 準備達成状況から進行度を算出 =====
+
+function calcStage1Progress(s: AdvancedCropState): number {
+  let p = 0;
+  if (s.isTilled) p += 25;
+  if (s.hasRidge) p += 35;
+  if (s.hasMulch) p += 20;
+  if (s.nutrition >= 40) p += 20;
+  return Math.min(100, p);
+}
+
+// ===== ステージ1: アクション後の即時遷移チェック =====
+
+
 // ===== 日次処理 =====
 
 export function processOneDay(prev: AdvancedCropState): AdvancedCropState {
@@ -55,19 +69,27 @@ export function processOneDay(prev: AdvancedCropState): AdvancedCropState {
 
   // 1. 自然変化
   s = applyNaturalChanges(s);
-  // 2. ステージ固有の効果
+  // 2. ストレス自然回復（自然変化後の水分・栄養で判定）
+  s = applyStressRecovery(s);
+  // 3. ステージ固有の効果
   s = applyStageEffects(s);
-  // 3. 健全度更新
+  // 4. 健全度更新
   s = updateHealth(s);
-  // 4. ステージ進行度更新
+  // 5. ステージ進行度更新
   s = updateStageProgress(s);
-  // 5. ステージ遷移チェック
-  if (s.stageProgress >= 100 && checkTransitionConditions(s)) {
+  // 6. ステージ遷移チェック
+  //    ステージ1はプレイヤーが苗を植えたとき（actionPlantSeedling）に即時遷移する。
+  //    日次処理での遷移はフォールバック（isPlanted=true の旧セーブデータ対応）。
+  //    ステージ2以降はstageProgress >= 100も必要
+  const canTransition = s.cultivationStage === 1
+    ? checkTransitionConditions(s)
+    : (s.stageProgress >= 100 && checkTransitionConditions(s));
+  if (canTransition) {
     s = advanceToNextStage(s);
   }
-  // 6. デイリーアドバイス生成
+  // 7. デイリーアドバイス生成
   s = { ...s, dailyAdvice: generateDailyAdvice(s) };
-  // 7. 当日フラグリセット
+  // 8. 当日フラグリセット
   s = { ...s, todayPollinated: false, todayPollinationRate: 50 };
 
   return s;
@@ -105,6 +127,25 @@ function applyNaturalChanges(s: AdvancedCropState): AdvancedCropState {
   };
 }
 
+function applyStressRecovery(s: AdvancedCropState): AdvancedCropState {
+  // ステージ1〜2は根が未発達のため自然回復なし
+  if (s.cultivationStage <= 2) return s;
+
+  // 水分が極端な状態では回復しない（乾燥・過湿ストレスが優先）
+  const moistureNotExtreme = s.moisture > 24 && s.moisture < 85;
+  if (!moistureNotExtreme) return s;
+
+  // 栄養が極端に不足している場合も回復しない
+  if (s.nutrition < 25) return s;
+
+  const moistureIdeal = s.moisture >= 40 && s.moisture <= 69;
+  const nutritionIdeal = s.nutrition >= 40 && s.nutrition <= 69;
+
+  // 水分・栄養ともに理想帯 → -2、どちらか一方でも適正外 → -1
+  const recovery = (moistureIdeal && nutritionIdeal) ? 2 : 1;
+  return { ...s, stress: clamp(s.stress - recovery) };
+}
+
 function applyStageEffects(s: AdvancedCropState): AdvancedCropState {
   let next = { ...s };
 
@@ -114,6 +155,8 @@ function applyStageEffects(s: AdvancedCropState): AdvancedCropState {
 
   switch (s.cultivationStage) {
     case 2: {
+      // 苗を植えるまではストレス・根付き度の変化なし
+      if (!s.isPlanted) break;
       next.stress = clamp(next.stress + 2);
       next.rootEstablishment = clamp(s.rootEstablishment + 5);
       break;
@@ -142,7 +185,7 @@ function applyStageEffects(s: AdvancedCropState): AdvancedCropState {
     }
     case 7: {
       // 成熟期: 色づき・甘さ・実の大きさが増す
-      next.coloring = clamp(s.coloring + 3);
+      next.coloring = clamp(s.coloring + 5);
       next.sweetness = clamp(s.sweetness + 6);
       const goodCond = s.moisture >= 35 && s.moisture <= 65 && s.stress <= 39;
       next.fruitSize = clamp(s.fruitSize + (goodCond ? 5 : 3));
@@ -181,11 +224,12 @@ function updateStageProgress(s: AdvancedCropState): AdvancedCropState {
 
   switch (s.cultivationStage) {
     case 1: {
-      delta = 20;
-      if (s.nutrition >= 40) delta += 10;
-      break;
+      // ステージ1の進行度は準備アクション達成状況から算出（日次加算なし）
+      return { ...s, stageProgress: calcStage1Progress(s) };
     }
     case 2: {
+      // 苗を植えるまでは進行度を加算しない
+      if (!s.isPlanted) break;
       delta = 10;
       if (s.moisture >= 40 && s.moisture <= 69) delta += 10;
       if (s.health >= 50) delta += 10;
@@ -242,7 +286,7 @@ function updateStageProgress(s: AdvancedCropState): AdvancedCropState {
 
 function checkTransitionConditions(s: AdvancedCropState): boolean {
   switch (s.cultivationStage) {
-    case 1: return s.hasRidge;
+    case 1: return s.isPlanted;
     case 2: return s.isPlanted && s.daysInStage >= 3 && s.rootEstablishment >= 30 && s.health >= 40;
     case 3: return s.daysInStage >= 5 && s.health >= 50 && s.nutrition >= 35;
     case 4: return s.daysInStage >= 4 && s.flowerCount >= 5 && s.health >= 45;
@@ -281,7 +325,8 @@ export function generateDailyAdvice(s: AdvancedCropState): string {
   if (s.cultivationStage === 5) return '🌸 花が咲き始めました！受粉を助けてあげましょう';
   if (s.cultivationStage === 6 && s.fruitCount > 12) return '✂️ 実が多すぎます。摘果すると1粒が大きく甘くなります';
   if (s.cultivationStage === 7) return '🍓 実が色づいてきました。水は控えめにすると甘くなります';
-  if (s.cultivationStage === 1 && !s.hasRidge) return '🏡 畝を作ると次のステージに進めます';
+  if (s.cultivationStage === 1 && !s.isTilled) return '⛏️ まず土を整えましょう。耕してから苗を植えます';
+  if (s.cultivationStage === 1) return '🌱 準備が整ったら苗を植えましょう';
   if (s.cultivationStage === 2 && !s.isPlanted) return '🌱 苗を植えましょう！根付きが栽培の始まりです';
 
   // 優先度3: パラメーター改善
@@ -301,40 +346,57 @@ export function generateDailyAdvice(s: AdvancedCropState): string {
 // ===== プレイヤーアクション（即時反映） =====
 
 export function actionTillSoil(s: AdvancedCropState): AdvancedCropState {
-  return {
-    ...s,
-    weedAmount: clamp(s.weedAmount - 10),
-    isTilled: true,
-    stageProgress: clamp(s.stageProgress + 20),
-  };
+  // マルチを敷いた後は土を耕すことができない
+  if (s.cultivationStage === 1 && s.hasMulch) return s;
+  const next = { ...s, weedAmount: clamp(s.weedAmount - 10), isTilled: true };
+  if (s.cultivationStage === 1) {
+    return { ...next, stageProgress: calcStage1Progress(next) };
+  }
+  return { ...next, stageProgress: clamp(next.stageProgress + 20) };
 }
 
 export function actionMakeRidge(s: AdvancedCropState): AdvancedCropState {
-  return {
-    ...s,
-    hasRidge: true,
-    stageProgress: clamp(s.stageProgress + 20),
-  };
+  // マルチを敷いた後は物理的に畝を作ることができない
+  if (s.hasMulch) return s;
+  const next = { ...s, hasRidge: true };
+  if (s.cultivationStage === 1) {
+    // 即時遷移しない（この後マルチを敷く余地を残す。遷移は actionLayMulch または日次処理で行う）
+    return { ...next, stageProgress: calcStage1Progress(next) };
+  }
+  return { ...next, stageProgress: clamp(next.stageProgress + 20) };
 }
 
 export function actionLayMulch(s: AdvancedCropState): AdvancedCropState {
-  return {
-    ...s,
-    hasMulch: true,
-    stageProgress: clamp(s.stageProgress + 10),
-  };
+  // 耕す前はマルチを敷けない（詰み防止: 未耕地にマルチを敷くと苗が植えられなくなる）
+  if (s.cultivationStage === 1 && !s.isTilled) return s;
+  const next = { ...s, hasMulch: true };
+  if (s.cultivationStage === 1) {
+    return { ...next, stageProgress: calcStage1Progress(next) };
+  }
+  return { ...next, stageProgress: clamp(next.stageProgress + 10) };
 }
 
 export function actionBaseFertilizer(s: AdvancedCropState): AdvancedCropState {
-  return { ...s, nutrition: clamp(s.nutrition + 15) };
+  // 元肥は土に混ぜ込む作業のため、マルチを敷いた後は実施不可
+  if (s.cultivationStage === 1 && s.hasMulch) return s;
+  const next = { ...s, nutrition: clamp(s.nutrition + 15) };
+  if (s.cultivationStage === 1) {
+    return { ...next, stageProgress: calcStage1Progress(next) };
+  }
+  return next;
 }
 
 export function actionPlantSeedling(s: AdvancedCropState): AdvancedCropState {
-  return {
+  const planted = {
     ...s,
     isPlanted: true,
     rootEstablishment: clamp(s.rootEstablishment + 10),
   };
+  // ステージ1で苗を植えると即時ステージ2へ遷移（苗を植えることがステージ1の終了条件）
+  if (s.cultivationStage === 1) {
+    return advanceToNextStage(planted);
+  }
+  return { ...planted, daysInStage: 0 }; // ステージ2以降は苗を植えた日から日数カウント
 }
 
 export function actionWater(s: AdvancedCropState, degree: ActionDegree): AdvancedCropState {
