@@ -21,8 +21,8 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function getSoilImage(status: string): string {
-  if (status === 'empty') return `${BASE}assets/crops/soil-empty.png`;
-  return `${BASE}assets/crops/soil-tilled.png`;
+  if (status === 'empty') return `${BASE}assets/crops/soil/soil-empty.png`;
+  return `${BASE}assets/crops/soil/soil-tilled.png`;
 }
 
 export function CellDetailPage() {
@@ -44,8 +44,9 @@ export function CellDetailPage() {
 
   const cropDef = cell.crop ? CROP_DEFINITIONS[cell.crop] : null;
   const displayStage = getCellDisplayStage(cell);
-  const isAdvanced = cell.cropState?.modelType === 'advanced';
-  const advancedState = isAdvanced ? cell.cropState : null;
+  const cs = cell.cropState;
+  const advancedState = cs?.modelType === 'advanced' ? cs : null;
+  const isAdvanced = advancedState !== null;
 
   const headerTitle = cell.crop
     ? `${cropDef?.name} （マス${cellId + 1}）`
@@ -97,21 +98,28 @@ export function CellDetailPage() {
         )}
 
         {/* 作物画像エリア */}
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-sky-100 to-green-100 shadow-md aspect-square max-h-64 flex items-center justify-center">
-          {hasCrop && cell.crop && displayStage > 0 ? (
-            <CropDisplay
-              crop={cell.crop}
-              stage={displayStage}
-              status={cell.status}
-              className="w-40 h-40"
-            />
-          ) : (
-            <img
-              src={getSoilImage(cell.status)}
-              alt="土"
-              className="w-full h-full object-cover"
-              onError={e => { (e.currentTarget as HTMLImageElement).src = `${BASE}assets/crops/soil-empty.png`; }}
-            />
+        <div className="relative rounded-3xl overflow-hidden shadow-md aspect-square max-h-80 w-full">
+          {/* 土の背景画像（常に表示） */}
+          <img
+            src={getSoilImage(cell.status)}
+            alt="土"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={e => {
+              const img = e.currentTarget as HTMLImageElement;
+              if (!img.src.includes('soil-empty')) img.src = `${BASE}assets/crops/soil/soil-empty.png`;
+            }}
+          />
+          {/* 作物画像（作物がある場合） */}
+          {hasCrop && cell.crop && displayStage > 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <CropDisplay
+                crop={cell.crop}
+                stage={displayStage}
+                status={cell.status}
+                className="w-full h-full"
+                fillContainer
+              />
+            </div>
           )}
 
           {/* ステータスバッジ */}
@@ -122,7 +130,7 @@ export function CellDetailPage() {
           )}
         </div>
 
-        {/* パラメーター表示（アドバンスドモデルのみ） */}
+        {/* 作物の状態（アドバンスドモデルのみ） */}
         {advancedState && (
           <ParameterDisplay cropState={advancedState} />
         )}

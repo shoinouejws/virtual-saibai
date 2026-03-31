@@ -69,6 +69,8 @@ export interface HarvestRecord {
   sweetness?: number;
 }
 
+export type WeatherEffectType = 'rain' | 'longRain' | 'highTemp' | 'pest' | 'birdDamage' | null;
+
 export interface GameState {
   fertilizer: number;
   insecticide: number;
@@ -79,6 +81,7 @@ export interface GameState {
   harvestLog: HarvestRecord[];
   lastLoginDate: string | null;
   currentGameDate: string | null;
+  activeWeatherEffect: WeatherEffectType;
 }
 
 export interface CropDefinition {

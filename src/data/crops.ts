@@ -8,11 +8,11 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
     maxGrowthPoints: 15,
     growthStages: 5,
     stageImages: [
-      'assets/crops/tomato_stage1.png',
-      'assets/crops/tomato_stage2.png',
-      'assets/crops/tomato-2.png',
-      'assets/crops/tomato-3.png',
-      'assets/crops/tomato-4.png',
+      'assets/crops/tomato/tomato_stage1.png',
+      'assets/crops/tomato/tomato_stage2.png',
+      'assets/crops/tomato/tomato-2.png',
+      'assets/crops/tomato/tomato-3.png',
+      'assets/crops/tomato/tomato-4.png',
     ],
     exchangeQuantityRange: { min: 3, max: 6 },
     exchangeUnit: '玉',
@@ -23,14 +23,14 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
     modelType: 'advanced',
     growthStages: 8,
     stageImages: [
-      'assets/crops/strawberry-1.png',    // S1: 栽培準備期
-      'assets/crops/strawberry-2.png',    // S2: 定植・活着期
-      'assets/crops/strawberry-3.png',    // S3: 葉成長期
-      'assets/crops/strawberry-4_real.png', // S4: 花芽形成期
-      'assets/crops/strawberry-5.png',    // S5: 開花期（未作成→絵文字フォールバック）
-      'assets/crops/strawberry-6.png',    // S6: 果実肥大期（未作成→絵文字フォールバック）
-      'assets/crops/strawberry-7.png',    // S7: 成熟期（未作成→絵文字フォールバック）
-      'assets/crops/strawberry-8.png',    // S8: 収穫可能期（未作成→絵文字フォールバック）
+      'assets/crops/strawberry/strawberry-1.png',    // S1: 栽培準備期
+      'assets/crops/strawberry/strawberry-2.png',    // S2: 定植・活着期
+      'assets/crops/strawberry/strawberry-3.png',    // S3: 葉成長期
+      'assets/crops/strawberry/strawberry-4.png',    // S4: 花芽形成期
+      'assets/crops/strawberry/strawberry-5.png',    // S5: 開花期
+      'assets/crops/strawberry/strawberry-6.png',    // S6: 果実肥大期
+      'assets/crops/strawberry/strawberry-7.png',    // S7: 成熟期
+      'assets/crops/strawberry/strawberry-8.png',    // S8: 収穫可能期
     ],
     stageNames: [
       '栽培準備期',

@@ -143,7 +143,7 @@ function applyStageEffects(s: AdvancedCropState): AdvancedCropState {
     case 7: {
       // 成熟期: 色づき・甘さ・実の大きさが増す
       next.coloring = clamp(s.coloring + 3);
-      next.sweetness = clamp(s.sweetness + 2);
+      next.sweetness = clamp(s.sweetness + 6);
       const goodCond = s.moisture >= 35 && s.moisture <= 65 && s.stress <= 39;
       next.fruitSize = clamp(s.fruitSize + (goodCond ? 5 : 3));
       break;
@@ -164,6 +164,9 @@ function updateHealth(s: AdvancedCropState): AdvancedCropState {
   let delta = 0;
   if (s.moisture >= 40 && s.moisture <= 69) delta += 1;
   if (s.nutrition >= 40 && s.nutrition <= 69) delta += 1;
+  // 雑草: 養分・水分の競合（閾値は SPECIFICATION.md 4.5 参照）
+  if (s.weedAmount >= 60) delta -= 2;
+  else if (s.weedAmount >= 40) delta -= 1;
   if (s.stress >= 60) delta -= 3;
   if (s.diseaseRisk >= 60) delta -= 4;
   if (s.pestRisk >= 60) delta -= 3;
@@ -534,6 +537,7 @@ export function getImprovementHints(s: AdvancedCropState): string[] {
     { condition: s.fruitCount > 12, hint: '実を8個程度に摘果すると、1粒が大きく甘くなります' },
     { condition: s.overripeRisk >= 30, hint: '収穫可能になったら早めに収穫すると、品質を保てます' },
     { condition: s.health < 50, hint: '水・栄養・ストレス管理を丁寧にすると、株が元気に育ちます' },
+    { condition: s.weedAmount >= 40, hint: '雑草が多いと株と養分の取り合いになります。除草で足元を整えましょう' },
   ];
 
   return hints

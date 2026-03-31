@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, FarmCellState, CropType, SimpleCropState, AdvancedCropState, ActionDegree, HarvestRecord } from '../types';
+import { GameState, FarmCellState, CropType, SimpleCropState, AdvancedCropState, ActionDegree, HarvestRecord, WeatherEffectType } from '../types';
 import { CROP_DEFINITIONS } from '../data/crops';
 import { saveGame, loadGame } from '../utils/storage';
 import {
@@ -55,6 +55,7 @@ function createInitialState(): GameState {
     harvestLog: [],
     lastLoginDate: today,
     currentGameDate: today,
+    activeWeatherEffect: null,
   };
 }
 
@@ -93,7 +94,7 @@ function applyDailyProcessing(state: GameState, days: number): GameState {
     };
   }
   const today = todayString();
-  return { ...next, lastLoginDate: today, currentGameDate: today };
+  return { ...next, lastLoginDate: today, currentGameDate: today, activeWeatherEffect: null };
 }
 
 // ===== フック本体 =====
@@ -531,14 +532,21 @@ export function useGameState() {
 
   // ===== イベント適用（デバッグ・日次ランダム） =====
 
+  const WEATHER_EFFECT_EVENTS: EventId[] = ['rain', 'longRain', 'highTemp', 'pest', 'birdDamage'];
+
   const applyGameEvent = useCallback((cellId: number | 'all', eventId: EventId) => {
     setState(prev => {
       const targetIds = cellId === 'all'
         ? prev.cells.map(c => c.id)
         : [cellId];
 
+      const weatherEffect: WeatherEffectType = WEATHER_EFFECT_EVENTS.includes(eventId)
+        ? eventId as WeatherEffectType
+        : prev.activeWeatherEffect;
+
       return {
         ...prev,
+        activeWeatherEffect: weatherEffect,
         cells: prev.cells.map(cell => {
           if (!targetIds.includes(cell.id)) return cell;
           if (!cell.cropState || cell.cropState.modelType !== 'advanced') return cell;
@@ -583,6 +591,16 @@ export function useGameState() {
     });
     notify('畑を拡張しました！ 🌾');
   }, [notify]);
+
+  const advanceDays = useCallback((days: number) => {
+    if (days <= 0) return;
+    setState(prev => ({ ...applyDailyProcessing(prev, days), activeWeatherEffect: null }));
+    notify(`⏭ ${days}日間経過させました`);
+  }, [notify]);
+
+  const clearWeatherEffect = useCallback(() => {
+    setState(prev => ({ ...prev, activeWeatherEffect: null }));
+  }, []);
 
   const resetGame = useCallback(() => {
     setState(createInitialState());
@@ -639,5 +657,7 @@ export function useGameState() {
     resetGame,
     dismissStageTransition,
     dismissHarvestResult,
+    advanceDays,
+    clearWeatherEffect,
   };
 }

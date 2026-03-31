@@ -94,7 +94,7 @@ export function ParameterDisplay({ cropState: s }: Props) {
 
   return (
     <div className="bg-white/80 rounded-2xl px-4 py-3 shadow-sm">
-      <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">パラメーター</h3>
+      <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">作物の状態</h3>
 
       <div className="space-y-0">
         <ParamRow icon="💚" label="株の元気" value={s.health} {...toHealthLabel(s.health)} />

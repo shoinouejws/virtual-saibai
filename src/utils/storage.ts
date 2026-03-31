@@ -1,7 +1,7 @@
 import { GameState } from '../types';
 
 const STORAGE_KEY = 'virtual-saibai-game';
-const SCHEMA_VERSION = 3; // FarmCellState を cropState ユニオン型に移行
+const SCHEMA_VERSION = 4; // activeWeatherEffect を GameState に追加
 
 interface VersionedState {
   version: number;

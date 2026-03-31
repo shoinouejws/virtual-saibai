@@ -1,10 +1,16 @@
-import { useState } from 'react';
 import { AdvancedCropState } from '../types';
 
 const STAGE_ICONS = ['🌱', '🏠', '🍃', '💮', '🌸', '🫐', '🍓', '✂️'] as const;
-const STAGE_NAMES = [
-  '栽培準備期', '定植・活着期', '葉成長期', '花芽形成期',
-  '開花期', '果実肥大期', '成熟期', '収穫可能期',
+
+const STAGE_FRIENDLY_NAMES = [
+  '畑の準備',
+  '苗の植えつけ',
+  '葉っぱの成長',
+  'つぼみ準備',
+  '花が咲く',
+  '実がなる',
+  '実が色づく',
+  '収穫どき',
 ] as const;
 
 interface Props {
@@ -12,91 +18,86 @@ interface Props {
 }
 
 export function StageRoadmap({ cropState }: Props) {
-  const [showDetail, setShowDetail] = useState(false);
   const current = cropState.cultivationStage;
+  const progress = Math.round(cropState.stageProgress);
+  const isLastStage = current >= 8;
+
+  const currentIcon = STAGE_ICONS[current - 1];
+  const currentName = STAGE_FRIENDLY_NAMES[current - 1];
+  const nextName = isLastStage ? null : STAGE_FRIENDLY_NAMES[current];
 
   return (
-    <div>
-      {/* コンパクトバー */}
-      <button
-        onClick={() => setShowDetail(v => !v)}
-        className="w-full bg-white/80 rounded-2xl px-3 py-2.5 shadow-sm"
-        aria-label="ステージ詳細を表示"
-      >
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-bold text-farm-text">栽培ステージ</span>
-          <span className="text-xs text-gray-400">{showDetail ? '▲ 閉じる' : '▼ 詳細'}</span>
-        </div>
-        <div className="flex items-center justify-between gap-0.5">
-          {STAGE_ICONS.map((icon, i) => {
-            const stage = i + 1;
-            const isCurrent = stage === current;
-            const isPast = stage < current;
-            return (
-              <div key={i} className="flex flex-col items-center gap-0.5 flex-1">
-                <span className={`
-                  text-base leading-none transition-all
-                  ${isCurrent ? 'text-2xl drop-shadow-sm' : isPast ? 'opacity-70' : 'opacity-30'}
-                `}>
-                  {icon}
-                </span>
-                {/* 矢印（最後のステージ以外） */}
-                {i < 7 && (
-                  <span className={`text-[9px] ${isPast ? 'text-farm-green' : 'text-gray-300'}`}>
-                    →
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {/* 現在ステージ名 */}
-        <div className="mt-1.5 text-center">
-          <span className="text-xs font-semibold text-farm-green-dark bg-farm-green/10 px-2 py-0.5 rounded-full">
-            {STAGE_ICONS[current - 1]} {STAGE_NAMES[current - 1]}
+    <div className="bg-white/80 rounded-2xl px-4 py-3 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs font-bold text-farm-text">栽培ステージ</span>
+        <span className="text-[10px] text-gray-400 ml-auto">{current} / 8</span>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {/* 現在ステージ */}
+        <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
+          <div className="
+            flex items-center justify-center
+            w-14 h-14 rounded-2xl
+            bg-farm-green/15 border-2 border-farm-green/40
+            shadow-sm
+          ">
+            <span className="text-3xl leading-none">{currentIcon}</span>
+          </div>
+          <span className="text-xs font-bold text-farm-green-dark text-center leading-tight truncate w-full">
+            {currentName}
           </span>
         </div>
-      </button>
 
-      {/* 詳細パネル */}
-      {showDetail && (
-        <div className="mt-2 bg-white/80 rounded-2xl px-4 py-3 shadow-sm">
-          <h3 className="text-sm font-bold text-farm-text mb-2">全ステージ一覧</h3>
-          <div className="space-y-1.5">
-            {STAGE_NAMES.map((name, i) => {
-              const stage = i + 1;
-              const isCurrent = stage === current;
-              const isPast = stage < current;
-              return (
-                <div key={i} className={`
-                  flex items-center gap-2 rounded-lg px-2 py-1.5
-                  ${isCurrent ? 'bg-farm-green/10 border border-farm-green/20' : ''}
-                `}>
-                  <span className={`text-base ${isPast ? '' : isCurrent ? '' : 'opacity-30'}`}>
-                    {STAGE_ICONS[i]}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-xs font-medium ${
-                      isCurrent ? 'text-farm-green-dark' : isPast ? 'text-gray-500' : 'text-gray-400'
-                    }`}>
-                      S{stage}: {name}
-                    </span>
-                  </div>
-                  <span className="text-xs">
-                    {isPast ? '✅' : isCurrent ? '▶️' : '○'}
-                  </span>
-                </div>
-              );
-            })}
+        {/* 矢印 + 進行度 */}
+        <div className="flex flex-col items-center gap-1 flex-[2] min-w-0">
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-farm-green rounded-full transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <div className="mt-2 pt-2 border-t border-gray-100">
-            <div className="text-xs text-gray-500">
-              進行度: <span className="font-semibold text-farm-green-dark">{Math.round(cropState.stageProgress)}%</span>
-              <span className="ml-2">経過日数: <span className="font-semibold">{cropState.daysInStage}日</span></span>
-            </div>
-          </div>
+          <span className="text-[10px] text-gray-500 font-medium">
+            {isLastStage ? '収穫できます！' : `あと ${100 - progress}%`}
+          </span>
         </div>
-      )}
+
+        {/* 次のステージ（または収穫完了表示） */}
+        {isLastStage ? (
+          <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
+            <div className="
+              flex items-center justify-center
+              w-14 h-14 rounded-2xl
+              bg-yellow-50 border-2 border-yellow-300/60
+            ">
+              <span className="text-3xl leading-none">🎉</span>
+            </div>
+            <span className="text-xs font-bold text-yellow-600 text-center leading-tight">
+              収穫！
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-1 min-w-0 flex-1">
+            <div className="
+              flex items-center justify-center
+              w-14 h-14 rounded-2xl
+              bg-gray-100 border-2 border-dashed border-gray-300
+            ">
+              <span className="text-2xl leading-none text-gray-400">？</span>
+            </div>
+            <span className="text-xs font-medium text-gray-400 text-center leading-tight truncate w-full">
+              {nextName}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 経過日数 */}
+      <div className="mt-2 pt-2 border-t border-gray-100 text-center">
+        <span className="text-[11px] text-gray-500">
+          このステージ <span className="font-semibold text-farm-green-dark">{cropState.daysInStage}日目</span>
+        </span>
+      </div>
     </div>
   );
 }

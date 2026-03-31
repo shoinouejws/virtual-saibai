@@ -134,6 +134,7 @@ export function ActionButtons({ cell }: Props) {
       case 2: // 定植・活着期
         if (!cs.isPlanted) actions.push({ key: 'plant', label: '苗を植える', icon: '🌱', disabled: false, onPress: () => game.strawberryPlantSeedling(cellId), highlight: true });
         actions.push({ key: 'water', label: '水やり', icon: '💧', disabled: cs.moisture >= 100, hasDegree: true, onPress: d => game.strawberryWater(cellId, d ?? 'normal') });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'fert', label: '軽く肥料', icon: '🧪', disabled: !hasFertilizer, onPress: () => game.strawberryFertilize(cellId, 'light') });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
@@ -155,6 +156,7 @@ export function ActionButtons({ cell }: Props) {
         actions.push({ key: 'fert', label: '追肥', icon: '🧪', disabled: !hasFertilizer, hasDegree: true, onPress: d => game.strawberryFertilize(cellId, d ?? 'normal') });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId), highlight: true });
         actions.push({ key: 'trim', label: '葉の整理', icon: '✂️', disabled: false, onPress: () => game.strawberryTrimLeaves(cellId, 'normal') });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
         actions.push({ key: 'pest', label: '害虫対策', icon: '🐛', disabled: !hasInsecticide, onPress: () => game.strawberryPestControl(cellId) });
         break;
@@ -163,6 +165,7 @@ export function ActionButtons({ cell }: Props) {
         actions.push({ key: 'pollinate', label: '受粉補助', icon: '🌸', disabled: cs.todayPollinated, onPress: () => game.strawberryPollinate(cellId), highlight: true });
         actions.push({ key: 'thinFlowers', label: '花を減らす', icon: '✂️', disabled: cs.flowerCount <= 3, onPress: () => game.strawberryThinFlowers(cellId) });
         actions.push({ key: 'water', label: '水やり', icon: '💧', disabled: cs.moisture >= 100, hasDegree: true, onPress: d => game.strawberryWater(cellId, d ?? 'light') });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'fert', label: '軽く追肥', icon: '🧪', disabled: !hasFertilizer, onPress: () => game.strawberryFertilize(cellId, 'light') });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
@@ -174,6 +177,7 @@ export function ActionButtons({ cell }: Props) {
         actions.push({ key: 'fert', label: '追肥', icon: '🧪', disabled: !hasFertilizer, hasDegree: true, onPress: d => game.strawberryFertilize(cellId, d ?? 'normal') });
         if (cs.fruitCount > 8) actions.push({ key: 'thinFruits', label: '摘果する', icon: '✂️', disabled: false, onPress: () => game.strawberryThinFruits(cellId), highlight: cs.fruitCount > 12 });
         actions.push({ key: 'trim', label: '葉の整理', icon: '✂️', disabled: false, onPress: () => game.strawberryTrimLeaves(cellId, 'normal') });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
         actions.push({ key: 'pest', label: '害虫対策', icon: '🐛', disabled: !hasInsecticide, onPress: () => game.strawberryPestControl(cellId) });
@@ -182,6 +186,7 @@ export function ActionButtons({ cell }: Props) {
       case 7: // 成熟期
         actions.push({ key: 'water', label: '水やり(少なめ)', icon: '💧', disabled: cs.moisture >= 85, onPress: () => game.strawberryWater(cellId, 'light') });
         actions.push({ key: 'trim', label: '葉の整理', icon: '✂️', disabled: false, onPress: () => game.strawberryTrimLeaves(cellId, 'normal'), highlight: true });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
         actions.push({ key: 'pest', label: '害虫対策', icon: '🐛', disabled: !hasInsecticide, onPress: () => game.strawberryPestControl(cellId) });
@@ -190,6 +195,7 @@ export function ActionButtons({ cell }: Props) {
       case 8: // 収穫可能期
         actions.push({ key: 'harvest', label: '収穫する！', icon: '🍓', disabled: false, onPress: () => game.harvest(cellId), highlight: true });
         actions.push({ key: 'water', label: '少量の水やり', icon: '💧', disabled: cs.moisture >= 70, onPress: () => game.strawberryWater(cellId, 'light') });
+        actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
         break;
 

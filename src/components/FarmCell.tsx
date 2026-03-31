@@ -23,17 +23,17 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function getSoilImage(cell: FarmCellState): string {
-  if (cell.status === 'empty') return `${BASE}assets/crops/soil-empty.png`;
+  if (cell.status === 'empty') return `${BASE}assets/crops/soil/soil-empty.png`;
   if (cell.cropState?.modelType === 'advanced') {
     const cs = cell.cropState;
-    if (cs.hasMulch) return `${BASE}assets/crops/soil-mulched.png`;
-    if (cs.hasRidge) return `${BASE}assets/crops/soil-ridged.png`;
+    if (cs.hasMulch) return `${BASE}assets/crops/soil/soil-mulched.png`;
+    if (cs.hasRidge) return `${BASE}assets/crops/soil/soil-ridged.png`;
   }
-  return `${BASE}assets/crops/soil-tilled.png`;
+  return `${BASE}assets/crops/soil/soil-tilled.png`;
 }
 
 function getGrowthAnimSrc(anim: GrowthAnimationInfo): string {
-  return `${BASE}assets/crops/${anim.cropType}_stage${anim.fromStage}to${anim.toStage}_400ms.webp`;
+  return `${BASE}assets/crops/${anim.cropType}/${anim.cropType}_stage${anim.fromStage}to${anim.toStage}_400ms.webp`;
 }
 
 function hasCrop(status: string): boolean {
@@ -75,7 +75,7 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
           src={getSoilImage(cell)}
           alt=""
           className="absolute inset-0 w-full h-full object-cover rounded-2xl"
-          onError={e => { (e.currentTarget as HTMLImageElement).src = `${BASE}assets/crops/soil-tilled.png`; }}
+          onError={e => { (e.currentTarget as HTMLImageElement).src = `${BASE}assets/crops/soil/soil-tilled.png`; }}
         />
 
         {/* 作物名バッジ */}

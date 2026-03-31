@@ -7,18 +7,19 @@ interface Props {
   stage: number;
   status?: CellStatus;
   className?: string;
+  fillContainer?: boolean;
 }
 
 // ステージごとの画像サイズ・グロー色・グローサイズ
 const STAGE_CONFIG = [
-  { imgClass: 'w-12 h-12', glowClass: 'w-16 h-16', glowColor: 'rgba(74, 222, 128, 0.55)' },   // めばえ
-  { imgClass: 'w-16 h-16', glowClass: 'w-22 h-22', glowColor: 'rgba(163, 230, 53, 0.55)' },    // のびのび
-  { imgClass: 'w-20 h-20', glowClass: 'w-28 h-28', glowColor: 'rgba(244, 114, 182, 0.55)' },   // 花ざかり
-  { imgClass: 'w-24 h-24', glowClass: 'w-32 h-32', glowColor: 'rgba(251, 146, 60, 0.55)' },    // 実なり
+  { imgClass: 'w-32 h-32', glowClass: 'w-40 h-40', glowColor: 'rgba(74, 222, 128, 0.55)' },
+  { imgClass: 'w-36 h-36', glowClass: 'w-44 h-44', glowColor: 'rgba(163, 230, 53, 0.55)' },
+  { imgClass: 'w-40 h-40', glowClass: 'w-52 h-52', glowColor: 'rgba(244, 114, 182, 0.55)' },
+  { imgClass: 'w-48 h-48', glowClass: 'w-60 h-60', glowColor: 'rgba(251, 146, 60, 0.55)' },
 ];
 const HARVESTABLE_GLOW = 'rgba(255, 215, 0, 0.75)';
 
-export function CropDisplay({ crop, stage, status, className = '' }: Props) {
+export function CropDisplay({ crop, stage, status, className = '', fillContainer = false }: Props) {
   const [useEmoji, setUseEmoji] = useState(false);
   const emoji = CROP_STAGE_EMOJI[crop][stage - 1] ?? '🌱';
   const cropDef = CROP_DEFINITIONS[crop];
@@ -38,8 +39,8 @@ export function CropDisplay({ crop, stage, status, className = '' }: Props) {
       {/* 光の輪（グロー） */}
       <div
         className={`
-          absolute rounded-full blur-lg
-          ${glowClass}
+          absolute rounded-full blur-xl
+          ${fillContainer ? 'inset-[10%]' : glowClass}
           ${isHarvestable ? 'animate-glow-pulse' : 'opacity-60'}
         `}
         style={{ backgroundColor: activeGlowColor }}
@@ -53,7 +54,7 @@ export function CropDisplay({ crop, stage, status, className = '' }: Props) {
           relative z-10 object-contain
           drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]
           transition-all duration-500
-          ${imgClass}
+          ${fillContainer ? 'w-[90%] h-[90%]' : imgClass}
           ${isHarvestable ? 'drop-shadow-[0_0_12px_rgba(255,215,0,0.8)]' : ''}
         `}
         onError={() => setUseEmoji(true)}
