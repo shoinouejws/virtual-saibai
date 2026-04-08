@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { GameState, FarmCellState, CropType, SimpleCropState, AdvancedCropState, ActionDegree, HarvestRecord, WeatherEffectType } from '../types';
+import { GameState, FarmCellState, CropType, SimpleCropState, AdvancedCropState, ActionDegree, HarvestRecord, WeatherEffectType, ActiveEventId } from '../types';
 import { CROP_DEFINITIONS } from '../data/crops';
 import { saveGame, loadGame } from '../utils/storage';
 import {
   createInitialAdvancedCropState,
+  createHarvestReadyAdvancedCropState,
   processOneDay,
   actionTillSoil, actionMakeRidge, actionLayMulch, actionBaseFertilizer,
   actionPlantSeedling, actionWater, actionFertilize, actionWeed, actionTrimLeaves,
@@ -45,17 +46,25 @@ function createEmptyCell(id: number): FarmCellState {
 
 function createInitialState(): GameState {
   const today = todayString();
+  const cells = Array.from({ length: 4 }, (_, i) => createEmptyCell(i));
+  cells[0] = {
+    id: 0,
+    status: 'harvestable',
+    crop: 'strawberry',
+    cropState: createHarvestReadyAdvancedCropState(),
+  };
   return {
     fertilizer: 150,
     insecticide: 0,
     fungicide: 0,
     temperatureSheet: 0,
     farmSize: 4,
-    cells: Array.from({ length: 4 }, (_, i) => createEmptyCell(i)),
+    cells,
     harvestLog: [],
     lastLoginDate: today,
     currentGameDate: today,
     activeWeatherEffect: null,
+    activeEventId: null,
   };
 }
 
@@ -94,7 +103,7 @@ function applyDailyProcessing(state: GameState, days: number): GameState {
     };
   }
   const today = todayString();
-  return { ...next, lastLoginDate: today, currentGameDate: today, activeWeatherEffect: null };
+  return { ...next, lastLoginDate: today, currentGameDate: today, activeWeatherEffect: null, activeEventId: null };
 }
 
 // ===== フック本体 =====
@@ -102,7 +111,12 @@ function applyDailyProcessing(state: GameState, days: number): GameState {
 export function useGameState() {
   const [state, setState] = useState<GameState>(() => {
     const loaded = loadGame();
-    if (loaded) return loaded;
+    if (loaded) {
+      return {
+        ...loaded,
+        activeEventId: (loaded.activeEventId ?? null) as ActiveEventId | null,
+      };
+    }
     return createInitialState();
   });
 
@@ -541,11 +555,12 @@ export function useGameState() {
 
       const weatherEffect: WeatherEffectType = WEATHER_EFFECT_EVENTS.includes(eventId)
         ? eventId as WeatherEffectType
-        : prev.activeWeatherEffect;
+        : null;
 
       return {
         ...prev,
         activeWeatherEffect: weatherEffect,
+        activeEventId: eventId as ActiveEventId,
         cells: prev.cells.map(cell => {
           if (!targetIds.includes(cell.id)) return cell;
           if (!cell.cropState || cell.cropState.modelType !== 'advanced') return cell;
@@ -598,7 +613,7 @@ export function useGameState() {
   }, [notify]);
 
   const clearWeatherEffect = useCallback(() => {
-    setState(prev => ({ ...prev, activeWeatherEffect: null }));
+    setState(prev => ({ ...prev, activeWeatherEffect: null, activeEventId: null }));
   }, []);
 
   const resetGame = useCallback(() => {

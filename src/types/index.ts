@@ -71,6 +71,13 @@ export interface HarvestRecord {
 
 export type WeatherEffectType = 'rain' | 'longRain' | 'highTemp' | 'pest' | 'birdDamage' | null;
 
+/** 直近に適用されたイベント（表示用）。`strawberryEngine` の EventId と同一集合。 */
+export type ActiveEventId =
+  | 'rain' | 'longRain' | 'highTemp' | 'lowTemp' | 'sunnyContinue'
+  | 'lowLight' | 'strongWind' | 'dryWeather'
+  | 'pest' | 'disease'
+  | 'birdDamage';
+
 export interface GameState {
   fertilizer: number;
   insecticide: number;
@@ -82,6 +89,8 @@ export interface GameState {
   lastLoginDate: string | null;
   currentGameDate: string | null;
   activeWeatherEffect: WeatherEffectType;
+  /** 画面上部に表示する「発生中」イベント。日付変更・エフェクト解除でクリア */
+  activeEventId: ActiveEventId | null;
 }
 
 export interface CropDefinition {

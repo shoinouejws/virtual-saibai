@@ -10,6 +10,41 @@ function clamp(v: number, min = 0, max = 100): number {
 
 // ===== 初期値 =====
 
+/** 初回セーブ用: 収穫期（段階8）のいちご。FarmPage マス1（cell id 0）の初期表示に使用 */
+export function createHarvestReadyAdvancedCropState(): AdvancedCropState {
+  return {
+    modelType: 'advanced',
+    cultivationStage: 8,
+    daysInStage: 0,
+    health: 75,
+    moisture: 55,
+    nutrition: 55,
+    stress: 15,
+    pestRisk: 10,
+    diseaseRisk: 8,
+    weedAmount: 20,
+    rotRisk: 5,
+    stageProgress: 0,
+    flowerCount: 0,
+    fruitCount: 10,
+    fruitSize: 85,
+    sweetness: 75,
+    coloring: 85,
+    qualityDamage: 0,
+    qualityBonus: 0,
+    overripeRisk: 0,
+    isTilled: true,
+    hasRidge: true,
+    hasMulch: true,
+    isPlanted: true,
+    rootEstablishment: 100,
+    todayPollinated: false,
+    todayPollinationRate: 50,
+    dailyAdvice: '🍓 いちごが赤く実りました！収穫のタイミングです！',
+    pendingStageTransition: false,
+  };
+}
+
 export function createInitialAdvancedCropState(): AdvancedCropState {
   return {
     modelType: 'advanced',
