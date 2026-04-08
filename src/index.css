@@ -4,9 +4,146 @@
 
 body {
   margin: 0;
-  background-color: #F5F0E8;
-  color: #333333;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
-    'Noto Sans JP', sans-serif;
+  background-color: #FAF8F5;
+  color: #3D3529;
+  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Hiragino Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.01em;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: 0.02em;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /** 摘果プロトタイプ: タップ後に実がエリア下部へ落ちる */
+  @keyframes thin-fall {
+    0% {
+      top: var(--fruit-y);
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+    100% {
+      top: 92%;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.82) rotate(14deg);
+    }
+  }
+
+  .animate-thin-fall {
+    animation: thin-fall 0.65s ease-in forwards;
+    pointer-events: none;
+    z-index: 30;
+    will-change: top, transform, opacity;
+  }
+
+  /**
+   * いちご・成長段階8（レイヤー分割パーツ）用のループアニメーション定義。
+   *
+   * - 茎・葉・実で別キーフレームにし、揺れ方の「癖」を分ける（全く同じ動きになるのを避ける）。
+   * - 実際の適用は `.strawberry-motion-*`（下の prefers-reduced-motion ブロック内）。
+   *   周期（duration）は stem / leaf / fruit で揃え、`animation-delay` だけ変えると
+   *   位相がずれ、同期しすぎない自然な揺れになる（内側ラッパーに delay を付与する想定）。
+   * - 角度・移動量は控えめ（〜1°前後）にして、画面全体がうるさくならないようにしている。
+   */
+  /** 茎: 左右にわずかに振れる（軸は下端・`.strawberry-motion-stem` で指定） */
+  @keyframes strawberry-stem-rock {
+    0%, 100% { transform: rotate(-0.55deg); }
+    50% { transform: rotate(0.65deg); }
+  }
+
+  /**
+   * 葉: 回転に加えて translateX で左右に少し滑る。
+   * 茎より振幅を大きくし、風で葉先が動くイメージ。
+   */
+  @keyframes strawberry-leaf-sway {
+    0%, 100% { transform: rotate(-0.8deg) translateX(-0.8px); }
+    50% { transform: rotate(0.8deg) translateX(0.8px); }
+  }
+
+  /**
+   * 実: 主に上下（translateY）でふわっと浮き、微回転で付き方の変化を付ける。
+   * 茎・葉より縦方向を強めにして、実だけが軽く見えるようにしている。
+   */
+  @keyframes strawberry-fruit-bob {
+    0%, 100% { transform: translateY(0) rotate(-0.8deg); }
+    50% { transform: translateY(-1.2px) rotate(0.8deg); }
+  }
+
+  /**
+   * いちご段階8・一発の「風」（パーツ別）。
+   * 内側のループ揺れ用 div の外側ラッパーに付与し、transform を積み重ねる。
+   * 茎は弱く、葉は強く（＋横ずれ）、実は中間＋軽い縦成分。delay は TS 側 `getStrawberryPartWindGust`。
+   */
+  @keyframes strawberry-wind-gust-stem {
+    0%, 100% { transform: rotate(0deg); }
+    35% { transform: rotate(3.4deg); }
+    65% { transform: rotate(1.1deg); }
+  }
+
+  @keyframes strawberry-wind-gust-leaf {
+    0%, 100% { transform: rotate(0deg) translateX(0); }
+    35% { transform: rotate(6.4deg) translateX(3.5px); }
+    65% { transform: rotate(3.2deg) translateX(1.2px); }
+  }
+
+  @keyframes strawberry-wind-gust-fruit {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    35% { transform: translateY(0.8px) rotate(3.6deg); }
+    65% { transform: translateY(0) rotate(1.8deg); }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @layer utilities {
+    /**
+     * 秒数を揃えると一体感が出やすい（7〜9s 程度が目安）。
+     * animation-fill-mode: backwards … 遅延中も 0% キーフレームを適用する。
+     * （delay 中は fill なしだと transform が無く、開始フレームで一気に 0% へ飛ぶためカクつく）
+     */
+    .strawberry-motion-stem {
+      animation: strawberry-stem-rock 6.5s ease-in-out infinite;
+      animation-fill-mode: backwards;
+      transform-origin: bottom center;
+    }
+
+    .strawberry-motion-leaf {
+      animation: strawberry-leaf-sway 6.5s ease-in-out infinite;
+      animation-fill-mode: backwards;
+      transform-origin: bottom center;
+    }
+
+    .strawberry-motion-fruit {
+      animation: strawberry-fruit-bob 6.5s ease-in-out infinite;
+      animation-fill-mode: backwards;
+      transform-origin: bottom center;
+    }
+
+    /**
+     * 風（一発）— パーツ種別。終了後にラッパーからクラスを外す。
+     * 再生時間は `strawberryStage8PartMotion.ts` の STRAWBERRY_WIND_GUST_DURATION_MS と一致させる。
+     */
+    .strawberry-wind-gust-stem-once {
+      animation: strawberry-wind-gust-stem 2.5s cubic-bezier(0.33, 0, 0.25, 1) forwards;
+      transform-origin: bottom center;
+    }
+
+    .strawberry-wind-gust-leaf-once {
+      animation: strawberry-wind-gust-leaf 2.5s cubic-bezier(0.33, 0, 0.25, 1) forwards;
+      transform-origin: bottom center;
+    }
+
+    .strawberry-wind-gust-fruit-once {
+      animation: strawberry-wind-gust-fruit 2.5s cubic-bezier(0.33, 0, 0.25, 1) forwards;
+      transform-origin: bottom center;
+    }
+  }
 }
