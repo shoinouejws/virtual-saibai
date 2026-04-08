@@ -1,95 +1,57 @@
-# アセット作成 TODO
+# アセット TODO
 
-このドキュメントでは、ゲームに必要な画像・アニメーションアセットのうち、**未作成のもの**を管理する。
-
----
-
-## 1. いちご成長段階画像（最優先）
-
-8ステージ制の実装に対応するため、ステージ5〜8の画像が必要。
-
-| ファイル名 | ステージ | 内容 | 状態 |
-|-----------|---------|------|------|
-| `strawberry-1.png` | 1: 栽培準備期 | 耕された畑・畝の風景 | ✅ 作成済み |
-| `strawberry-2.png` | 2: 定植・活着期 | 植えたばかりの小さな苗 | ✅ 作成済み |
-| `strawberry-3.png` | 3: 葉成長期 | 葉が茂った株 | ✅ 作成済み |
-| `strawberry-4.png` | 4: 花芽形成期 | つぼみが見え始めた株 | ✅ 作成済み（`strawberry-4_real.png`を使用中） |
-| `strawberry-5.png` | 5: 開花期 | 白い花が咲いた状態 | ❌ **未作成** |
-| `strawberry-6.png` | 6: 果実肥大期 | 青い実がついている状態 | ❌ **未作成** |
-| `strawberry-7.png` | 7: 成熟期 | 実が色づき始めた状態（半赤） | ❌ **未作成** |
-| `strawberry-8.png` | 8: 収穫可能期 | 赤く完熟したいちごの実 | ❌ **未作成** |
-
-### 画像プロンプト方針（strawberry_progress_design.md のステージ内容に準拠）
-
-- **サイズ**: 256×256px（透過PNG推奨）
-- **テイスト**: カジュアルなイラスト調（統一感重要）
-- **参考**: `docs/IMAGE_PROMPTS.md` の既存プロンプトスタイルを踏襲
-
-#### strawberry-5.png（開花期）
-> 葉の茂ったいちごの株。白くて小さな5弁の花が複数咲いている。黄色い花芯が可愛らしい。カジュアルなイラスト風。透過背景。256×256px。
-
-#### strawberry-6.png（果実肥大期）
-> いちごの株。花が落ち、緑色〜白色の小さな実が複数ついている状態。実はまだ未熟で硬そう。カジュアルなイラスト風。透過背景。256×256px。
-
-#### strawberry-7.png（成熟期）
-> いちごの株。実が白〜薄ピンク〜赤へとグラデーションで色づいている半完熟状態。複数の実が見える。カジュアルなイラスト風。透過背景。256×256px。
-
-#### strawberry-8.png（収穫可能期）
-> いちごの株。鮮やかな赤色の完熟いちごが複数実っている。ハート型のいちご、つやつやした質感。収穫を待つ最高潮の状態。カジュアルなイラスト風。透過背景。256×256px。
-
-### 暫定対応
-
-未作成の画像（5〜8）は、画像読み込み失敗時の絵文字フォールバックを使用する：
-- Stage 5: 🌸
-- Stage 6: 🫐
-- Stage 7: 🍓（薄め）
-- Stage 8: 🍓
+❌ = 未作成（上から優先度順）、✅ = 作成済み（末尾にまとめて記載）。
 
 ---
 
-## 2. 成長アニメーション WebP（いちご）
+## 未作成
 
-現在はトマト用のみ存在する。いちごのステージ遷移アニメーションが必要。
+### 摘果プロトタイプUI用
 
-| ファイル名 | 内容 | 状態 |
-|-----------|------|------|
-| `tomato_stage1to2_400ms.webp` | トマト ステージ1→2 | ✅ 作成済み |
-| `strawberry_stage1to2_400ms.webp` | いちご ステージ1→2 | ❌ **未作成** |
-| `strawberry_stage2to3_400ms.webp` | いちご ステージ2→3 | ❌ **未作成** |
-| `strawberry_stage3to4_400ms.webp` | いちご ステージ3→4 | ❌ **未作成** |
-| `strawberry_stage4to5_400ms.webp` | いちご ステージ4→5 | ❌ **未作成** |
-| `strawberry_stage5to6_400ms.webp` | いちご ステージ5→6 | ❌ **未作成** |
-| `strawberry_stage6to7_400ms.webp` | いちご ステージ6→7 | ❌ **未作成** |
-| `strawberry_stage7to8_400ms.webp` | いちご ステージ7→8 | ❌ **未作成** |
+透過PNG。マーカーは `type` に応じて3種類の実画像を表示し、`size`（%）で表示サイズを変える。摘果カーソルは 128×128 以下の PNG を使用。
 
-> アニメーションは `onError` で無視（FarmCell.tsx 実装済み）。未作成でも動作に支障なし。
+| # | ファイル | サイズ | 内容 |
+|---|---------|--------|------|
+| 1 | `assets/ui/thinning/fruit-red.png` | 48×48px 目安 | 完熟の赤い実（1粒）— `type: red` |
+| 2 | `assets/ui/thinning/fruit-green.png` | 48×48px 目安 | 未熟の青緑の実（1粒）— `type: green` |
+| 3 | `assets/ui/thinning/fruit-half.png` | 48×48px 目安 | 半熟の白〜ピンクの実（1粒）— `type: half` |
+| 4 | `assets/ui/thinning/scissors.png` | 任意（透過） | ハサミ素材（高解像度可） |
+| 5 | `assets/ui/thinning/scissors-cursor-128.png` | **128×128**・透過 | 摘果カーソル用（`script/make_thinning_cursor.py` で `scissors.png` から生成） |
+
+### いちご成長段階画像
+
+256×256px / 透過PNG / カジュアルなイラスト調
+
+| # | ファイル | 内容 |
+|---|---------|------|
+| 6 | `assets/crops/strawberry/strawberry-5.png` | S5 開花期（白い花が複数咲いた状態） |
+| 7 | `assets/crops/strawberry/strawberry-6.png` | S6 果実肥大期（緑〜白の小さな実が複数） |
+| 8 | `assets/crops/strawberry/strawberry-7.png` | S7 成熟期（白〜ピンク〜赤のグラデーション） |
+| 9 | `assets/crops/strawberry/strawberry-8/strawberry-8.png` | S8 収穫可能期（赤い完熟いちごが複数） |
+
+### 土・畑画像
+
+| # | ファイル | 内容 |
+|---|---------|------|
+| 10 | `assets/crops/soil/soil-ridged.png` | 畝が作られた土 |
+| 11 | `assets/crops/soil/soil-mulched.png` | マルチシートが敷かれた土 |
+
+### ステージ遷移アニメーション（低優先・なくても動作する）
+
+| # | ファイル | 内容 |
+|---|---------|------|
+| 12 | `assets/crops/strawberry/strawberry_stage*to*_400ms.webp` | いちご S1→S2 〜 S7→S8（計7つ） |
 
 ---
 
-## 3. 土・畑関連画像
+## 作成済み
 
-| ファイル名 | 内容 | 状態 |
-|-----------|------|------|
-| `soil-empty.png` | 未使用の土 | ✅ 作成済み |
-| `soil-tilled.png` | 耕された土 | ✅ 作成済み |
-| `soil-ridged.png` | 畝が作られた土（いちごステージ1用） | ❌ **未作成** |
-| `soil-mulched.png` | マルチ（ビニールシート）が敷かれた土 | ❌ **未作成** |
-
-> 暫定: `soil-tilled.png` を代用
-
----
-
-## 4. UIアイコン・その他
-
-| ファイル名 | 内容 | 状態 |
-|-----------|------|------|
-| パラメーターアイコン群 | 健全度・水分・栄養・害虫・病気のアイコン | 絵文字で代替中 |
-| ステージロードマップアイコン | 各ステージの小さなアイコン | 絵文字で代替中 |
-
----
-
-## 優先度まとめ
-
-1. **最優先**: `strawberry-5.png` 〜 `strawberry-8.png`（ゲームの見た目に直結）
-2. **中優先**: `soil-ridged.png`, `soil-mulched.png`（ステージ1の表現向上）
-3. **低優先**: 成長アニメーションWebP（なくても動作する）
+| ファイル | 内容 |
+|---------|------|
+| `assets/crops/strawberry/strawberry-2.png` | S2 定植・活着期（小さな苗） |
+| `assets/crops/strawberry/strawberry-3.png` | S3 葉成長期（葉が茂った株） |
+| `assets/crops/strawberry/strawberry-4.png` | S4 花芽形成期（つぼみが見え始めた株） |
+| `assets/crops/soil/soil-empty.png` | 未使用の土 |
+| `assets/crops/soil/soil-tilled.png` | 耕された土 |
+| `assets/crops/tomato/tomato_stage1to2_400ms.webp` | トマト S1→S2 遷移アニメーション |
+| `assets/ui/thinning/plant-base.png` | 摘果プロト用の株画像（背景） |
