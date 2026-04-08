@@ -543,10 +543,10 @@ export function WeatherOverlay({ effect, onDismiss }: Props) {
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-10 pointer-events-none overflow-hidden rounded-lg"
+      className="absolute inset-0 z-10 pointer-events-none overflow-hidden"
     >
       <canvas ref={canvasRef} className="absolute inset-0" />
-      {onDismiss && (
+      {/* {onDismiss && (
         <button
           onClick={onDismiss}
           className="absolute top-2 right-2 z-20 pointer-events-auto
@@ -557,7 +557,7 @@ export function WeatherOverlay({ effect, onDismiss }: Props) {
         >
           ✕
         </button>
-      )}
+      )} */}
     </div>
   );
 }

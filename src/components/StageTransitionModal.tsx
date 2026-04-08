@@ -11,40 +11,38 @@ export function StageTransitionModal({ newStage, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm animate-fade-in-down"
+        className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm animate-fade-in-down"
         onClick={e => e.stopPropagation()}
       >
-        {/* お祝いアイコン */}
         <div className="text-center mb-4">
-          <div className="text-5xl mb-2">🎉</div>
-          <h2 className="text-lg font-bold text-farm-text">{msg.title}</h2>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-farm-green-light mb-3">
+            <span className="text-2xl">🌱</span>
+          </div>
+          <h2 className="text-base font-bold text-farm-text">{msg.title}</h2>
         </div>
 
-        {/* ステージ番号バッジ */}
         <div className="flex justify-center mb-4">
-          <span className="bg-farm-green text-white text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-farm-green-dark text-white text-xs font-semibold px-3 py-1 rounded-lg">
             ステージ {newStage} へ進みました
           </span>
         </div>
 
-        {/* 内容 */}
-        <div className="bg-green-50 rounded-2xl p-4 mb-4">
-          <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+        <div className="bg-farm-green-light/60 rounded-xl p-4 mb-4 border border-farm-green/20">
+          <p className="text-sm text-farm-text leading-relaxed whitespace-pre-line">
             {msg.body}
           </p>
         </div>
 
-        {/* 閉じるボタン */}
         <button
           onClick={onClose}
-          className="w-full py-3 bg-farm-green-dark text-white font-bold rounded-xl
-            hover:brightness-110 active:scale-95 transition-all"
+          className="w-full py-3 bg-farm-green-dark text-white font-semibold text-sm rounded-xl
+            hover:bg-farm-green active:scale-[0.98] transition-all shadow-sm"
         >
-          次のステージへ！
+          次のステージへ
         </button>
       </div>
     </div>

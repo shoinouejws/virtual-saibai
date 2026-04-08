@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { CropType, CellStatus } from '../types';
 import { CROP_DEFINITIONS, CROP_STAGE_EMOJI } from '../data/crops';
+import { STRAWBERRY_STAGE8_PART_DEFAULTS } from '../data/strawberryStage8PartLayout';
+import { StrawberryStage8FillContent } from './StrawberryStage8LayoutFrame';
+import { StrawberryStage8LayeredCrop } from './StrawberryStage8LayeredCrop';
 
 interface Props {
   crop: CropType;
@@ -8,18 +11,31 @@ interface Props {
   status?: CellStatus;
   className?: string;
   fillContainer?: boolean;
+  /** いちご・アドバンスド時の害虫リスク（段階8の葉食害表示に使用） */
+  pestRisk?: number;
+  /** いちご段階8・一発の風（`StrawberryStage8LayeredCrop` に伝播） */
+  windGustActive?: boolean;
+  onWindGustEnd?: () => void;
 }
 
-// ステージごとの画像サイズ・グロー色・グローサイズ
 const STAGE_CONFIG = [
-  { imgClass: 'w-32 h-32', glowClass: 'w-40 h-40', glowColor: 'rgba(74, 222, 128, 0.55)' },
-  { imgClass: 'w-36 h-36', glowClass: 'w-44 h-44', glowColor: 'rgba(163, 230, 53, 0.55)' },
-  { imgClass: 'w-40 h-40', glowClass: 'w-52 h-52', glowColor: 'rgba(244, 114, 182, 0.55)' },
-  { imgClass: 'w-48 h-48', glowClass: 'w-60 h-60', glowColor: 'rgba(251, 146, 60, 0.55)' },
+  { imgClass: 'w-32 h-32', glowClass: 'w-36 h-36', glowColor: 'rgba(91, 140, 90, 0.25)' },
+  { imgClass: 'w-36 h-36', glowClass: 'w-40 h-40', glowColor: 'rgba(91, 140, 90, 0.25)' },
+  { imgClass: 'w-40 h-40', glowClass: 'w-48 h-48', glowColor: 'rgba(91, 140, 90, 0.20)' },
+  { imgClass: 'w-48 h-48', glowClass: 'w-56 h-56', glowColor: 'rgba(91, 140, 90, 0.20)' },
 ];
-const HARVESTABLE_GLOW = 'rgba(255, 215, 0, 0.75)';
+const HARVESTABLE_GLOW = 'rgba(201, 168, 76, 0.35)';
 
-export function CropDisplay({ crop, stage, status, className = '', fillContainer = false }: Props) {
+export function CropDisplay({
+  crop,
+  stage,
+  status,
+  className = '',
+  fillContainer = false,
+  pestRisk,
+  windGustActive = false,
+  onWindGustEnd,
+}: Props) {
   const [useEmoji, setUseEmoji] = useState(false);
   const emoji = CROP_STAGE_EMOJI[crop][stage - 1] ?? '🌱';
   const cropDef = CROP_DEFINITIONS[crop];
@@ -30,18 +46,50 @@ export function CropDisplay({ crop, stage, status, className = '', fillContainer
   const { imgClass, glowClass, glowColor } = STAGE_CONFIG[stageIdx];
   const activeGlowColor = isHarvestable ? HARVESTABLE_GLOW : glowColor;
 
+  if (crop === 'strawberry' && stage === 8 && !useEmoji) {
+    const outerFrameClass = fillContainer ? 'w-full h-full' : imgClass;
+    return (
+      <div className={`relative flex items-center justify-center min-h-0 ${className}`}>
+        <div
+          className={`
+            absolute rounded-full blur-xl
+            ${fillContainer ? 'inset-[15%]' : glowClass}
+            ${isHarvestable ? 'animate-glow-pulse' : 'opacity-50'}
+          `}
+          style={{ backgroundColor: activeGlowColor }}
+        />
+        <div
+          className={`
+            relative z-10 flex items-center justify-center object-contain min-h-0
+            ${outerFrameClass}
+          `}
+        >
+          <StrawberryStage8FillContent>
+            <StrawberryStage8LayeredCrop
+              parts={STRAWBERRY_STAGE8_PART_DEFAULTS}
+              pestRisk={pestRisk}
+              motionEnabled
+              windGustActive={windGustActive}
+              onWindGustEnd={onWindGustEnd}
+            />
+          </StrawberryStage8FillContent>
+        </div>
+      </div>
+    );
+  }
+
   if (useEmoji) {
-    return <span className={`text-6xl select-none ${className}`}>{emoji}</span>;
+    return <span className={`text-5xl select-none ${className}`}>{emoji}</span>;
   }
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
-      {/* 光の輪（グロー） */}
+      {/* 控えめな光の輪 */}
       <div
         className={`
           absolute rounded-full blur-xl
-          ${fillContainer ? 'inset-[10%]' : glowClass}
-          ${isHarvestable ? 'animate-glow-pulse' : 'opacity-60'}
+          ${fillContainer ? 'inset-[15%]' : glowClass}
+          ${isHarvestable ? 'animate-glow-pulse' : 'opacity-50'}
         `}
         style={{ backgroundColor: activeGlowColor }}
       />
@@ -52,22 +100,12 @@ export function CropDisplay({ crop, stage, status, className = '', fillContainer
         alt={`${cropDef.name} 段階${stage}`}
         className={`
           relative z-10 object-contain
-          drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]
+          drop-shadow-[0_3px_6px_rgba(0,0,0,0.35)]
           transition-all duration-500
-          ${fillContainer ? 'w-[90%] h-[90%]' : imgClass}
-          ${isHarvestable ? 'drop-shadow-[0_0_12px_rgba(255,215,0,0.8)]' : ''}
+          ${fillContainer ? 'w-[88%] h-[88%]' : imgClass}
         `}
         onError={() => setUseEmoji(true)}
       />
-
-      {/* 収穫OK 星パーティクル */}
-      {isHarvestable && (
-        <div className="absolute inset-0 pointer-events-none">
-          <span className="absolute top-0 right-1 text-sm animate-bounce" style={{ animationDelay: '0s' }}>✨</span>
-          <span className="absolute bottom-1 left-0 text-xs animate-bounce" style={{ animationDelay: '0.4s' }}>⭐</span>
-          <span className="absolute top-1 left-1 text-xs animate-bounce" style={{ animationDelay: '0.8s' }}>✨</span>
-        </div>
-      )}
     </div>
   );
 }

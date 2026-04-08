@@ -1,6 +1,7 @@
 import { FarmCellState, getCellDisplayStage } from '../types';
 import { CROP_DEFINITIONS } from '../data/crops';
 import { CropDisplay } from './CropDisplay';
+import { StrawberryStage8ReferenceSlot } from './StrawberryStage8LayoutFrame';
 import { GrowthGauge, GaugeMode } from './GrowthGauge';
 import { GrowthAnimationInfo } from '../hooks/useGameState';
 import { getSoilImage } from '../utils/soilImage';
@@ -20,10 +21,9 @@ const STATUS_LABELS: Record<string, string> = {
   tilled: '耕し済み',
   planted: '種まき済み',
   growing: '成長中',
-  harvestable: '収穫OK！',
+  harvestable: '収穫可能',
 };
 
-// 作物画像を表示すべきか（ステージ1・苗植え前は非表示）
 function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean {
   if (!cell.crop || displayStage <= 0) return false;
   if (cell.cropState?.modelType === 'advanced') {
@@ -48,8 +48,12 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
   const cropName = cell.crop ? CROP_DEFINITIONS[cell.crop].name : null;
   const displayStage = getCellDisplayStage(cell);
   const showCropImage = shouldShowCropImage(cell, displayStage);
+  /** FarmPage 畑マスと同一の 1:1 基準スロット＋fillContainer で段階8の相対座標を解釈する */
+  const strawberryStage8Layered =
+    showCropImage && cell.crop === 'strawberry' && displayStage === 8;
+  const pestRiskForDisplay =
+    cell.cropState?.modelType === 'advanced' ? cell.cropState.pestRisk : undefined;
 
-  // いちごのステージ表示ラベル
   const stageLabel = (() => {
     if (!cell.crop || !cell.cropState) return null;
     if (cell.cropState.modelType === 'advanced') {
@@ -65,19 +69,22 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
         onClick={onSelect}
         aria-label={`マス ${cell.id + 1}: ${STATUS_LABELS[cell.status]}${cropName ? ` (${cropName})` : ''}`}
         className={`
-          relative aspect-square rounded-2xl min-h-[130px] w-full
+          relative aspect-square rounded-xl min-h-[130px] w-full
           flex flex-col items-center justify-between
           transition-all duration-200 cursor-pointer
-          border-3 overflow-hidden
-          border-transparent hover:border-farm-green/30 hover:scale-[1.02]
-          ${isHarvestable ? 'animate-sparkle' : ''}
+          overflow-hidden border-2
+          ${isHarvestable
+            ? 'border-farm-gold/60 animate-harvest-glow'
+            : 'border-transparent hover:border-farm-green/30'
+          }
+          hover:shadow-md
         `}
       >
         {/* 土の背景画像 */}
         <img
           src={getSoilImage(cell)}
           alt=""
-          className="absolute inset-0 w-full h-full object-cover rounded-2xl"
+          className="absolute inset-0 w-full h-full object-cover"
           onError={e => { (e.currentTarget as HTMLImageElement).src = `${BASE}assets/crops/soil/soil-tilled.png`; }}
         />
 
@@ -85,41 +92,58 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
         {cropName && (
           <div className="absolute top-1.5 left-1.5 z-20">
             <span className="
-              inline-flex items-center px-2 py-1 rounded-lg
-              text-[11px] font-semibold leading-none tracking-wide
-              bg-gradient-to-br from-green-900/90 to-emerald-900/85
-              text-white border border-white/25
-              shadow-[0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-sm
+              inline-flex items-center px-1.5 py-0.5 rounded
+              text-[10px] font-semibold leading-none tracking-wide
+              bg-black/55 text-white/90
+              backdrop-blur-sm
             ">
               {cropName}
             </span>
           </div>
         )}
 
-        {/* タップ誘導アイコン */}
-        <div className="absolute top-1.5 right-1.5 z-20">
-          <span className="text-white/50 text-xs">›</span>
-        </div>
+        {/* 収穫可能ラベル */}
+        {isHarvestable && (
+          <div className="absolute top-1.5 right-1.5 z-20">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-farm-gold text-white shadow-sm">
+              収穫可
+            </span>
+          </div>
+        )}
 
-        {/* 作物の表示 */}
-        <div className={`
-          relative z-10 flex items-center justify-center w-full flex-1
-          ${isAnimating ? 'animate-bounce-grow' : ''}
-        `}>
-          {showCropImage && (
-            <CropDisplay crop={cell.crop!} stage={displayStage} status={cell.status} />
-          )}
+        {/* 作物の表示（いちご段階8は FarmPage 畑マスと同じ 1:1 基準スロット） */}
+        <div
+          className={`
+            relative z-10 flex w-full flex-1 min-h-0 flex-col items-center justify-center
+            ${isAnimating ? 'animate-bounce-grow' : ''}
+          `}
+        >
+          {showCropImage &&
+            (strawberryStage8Layered ? (
+              <StrawberryStage8ReferenceSlot className="h-full w-full">
+                <CropDisplay
+                  crop={cell.crop!}
+                  stage={displayStage}
+                  status={cell.status}
+                  className="h-full w-full"
+                  fillContainer
+                  pestRisk={pestRiskForDisplay}
+                />
+              </StrawberryStage8ReferenceSlot>
+            ) : (
+              <CropDisplay crop={cell.crop!} stage={displayStage} status={cell.status} />
+            ))}
         </div>
 
         {/* 下部エリア */}
         <div className="relative z-10 w-full">
           {showGauge ? (
-            <div className="bg-black/40 backdrop-blur-sm">
+            <div className="bg-black/45 backdrop-blur-sm">
               <GrowthGauge cell={cell} mode={gaugeMode} />
             </div>
           ) : (
             <div className="flex justify-center pb-2">
-              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-black/40 text-white">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-black/40 text-white/80">
                 {stageLabel ?? STATUS_LABELS[cell.status]}
               </span>
             </div>
@@ -128,7 +152,7 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
 
         {/* 成長アニメーション */}
         {growthAnim && (
-          <div className="absolute inset-0 z-30 flex items-center justify-center rounded-2xl overflow-hidden bg-black/20">
+          <div className="absolute inset-0 z-30 flex items-center justify-center overflow-hidden bg-black/20">
             <img
               key={`${growthAnim.fromStage}-${growthAnim.toStage}`}
               src={getGrowthAnimSrc(growthAnim)}

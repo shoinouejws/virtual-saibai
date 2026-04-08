@@ -1,13 +1,22 @@
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { CROP_DEFINITIONS } from '../data/crops';
+import {
+  CROP_MOTION_OPTIONS,
+  CROP_MOTION_STORAGE_KEY,
+  parseCropMotionPreviewId,
+  type CropMotionPreviewId,
+} from '../constants/cropMotionPreview';
 import { CropDisplay } from '../components/CropDisplay';
+import { StrawberryStage8ReferenceSlot } from '../components/StrawberryStage8LayoutFrame';
 import { StageRoadmap } from '../components/StageRoadmap';
 import { ParameterDisplay } from '../components/ParameterDisplay';
 import { DailyAdvice } from '../components/DailyAdvice';
 import { ActionButtons } from '../components/ActionButtons';
 import { StageTransitionModal } from '../components/StageTransitionModal';
 import { HarvestResultModal } from '../components/HarvestResultModal';
+import { WeatherOverlay } from '../components/WeatherOverlay';
 import { getCellDisplayStage, FarmCellState } from '../types';
 import { getSoilImage } from '../utils/soilImage';
 
@@ -18,10 +27,9 @@ const STATUS_LABELS: Record<string, string> = {
   tilled: '耕し済み',
   planted: '種まき済み',
   growing: '成長中',
-  harvestable: '収穫OK！',
+  harvestable: '収穫可能',
 };
 
-// 作物画像を表示すべきか（ステージ1・苗植え前は非表示）
 function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean {
   if (!cell.crop || displayStage <= 0) return false;
   if (cell.cropState?.modelType === 'advanced') {
@@ -32,10 +40,59 @@ function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean
   return true;
 }
 
+function readStoredCropMotion(): CropMotionPreviewId {
+  if (typeof window === 'undefined') return 'wave';
+  return parseCropMotionPreviewId(sessionStorage.getItem(CROP_MOTION_STORAGE_KEY)) ?? 'wave';
+}
+
+/** 作物レイヤーに CSS の揺れパターンを適用（試験用）
+ *  注意: `motion-safe:animate-*` はソースに**そのままの文字列**で書くこと。
+ *  Tailwind は動的に連結したクラス名を検出できず、CSS が生成されない。 */
+function AnimatedCropLayer({ mode, children }: { mode: CropMotionPreviewId; children: ReactNode }) {
+  switch (mode) {
+    case 'wave':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-wave-standard">
+          {children}
+        </div>
+      );
+    case 'waveBrisk':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-wave-brisk">
+          {children}
+        </div>
+      );
+    case 'waveSurge':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-wave-surge">
+          {children}
+        </div>
+      );
+    case 'bob':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-bob-standard">
+          {children}
+        </div>
+      );
+    case 'bobDrift':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-bob-drift">
+          {children}
+        </div>
+      );
+    case 'bobRise':
+      return (
+        <div className="h-full w-full flex items-center justify-center origin-bottom motion-safe:animate-crop-bob-rise">
+          {children}
+        </div>
+      );
+  }
+}
+
 export function CellDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { state, stageTransition, harvestResult, dismissStageTransition, dismissHarvestResult } = useGame();
+  const { state, stageTransition, harvestResult, dismissStageTransition, dismissHarvestResult, clearWeatherEffect } = useGame();
 
   const cellId = id !== undefined ? Number(id) : -1;
   const cell = state.cells.find(c => c.id === cellId);
@@ -43,8 +100,8 @@ export function CellDetailPage() {
   if (!cell) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-gray-500">マスが見つかりません</p>
-        <Link to="/" className="text-farm-green underline">畑に戻る</Link>
+        <p className="text-farm-text-secondary">マスが見つかりません</p>
+        <Link to="/" className="text-farm-green-dark underline text-sm">畑に戻る</Link>
       </div>
     );
   }
@@ -56,35 +113,57 @@ export function CellDetailPage() {
   const isAdvanced = advancedState !== null;
 
   const headerTitle = cell.crop
-    ? `${cropDef?.name} （マス${cellId + 1}）`
+    ? `${cropDef?.name} — マス${cellId + 1}`
     : `マス${cellId + 1}`;
 
   const hasCrop = cell.status !== 'empty' && cell.status !== 'tilled';
   const showCropImage = shouldShowCropImage(cell, displayStage);
+  /** 段階8いちごは分割パーツ個別アニメのため、全体ラッパーの揺れは付けない */
+  const useStrawberryLayeredParts =
+    cell.crop === 'strawberry' && displayStage === 8;
+
+  const [cropMotion, setCropMotion] = useState<CropMotionPreviewId>(readStoredCropMotion);
+  /** いちご段階8・風アニメーション（ラッパーに一時クラス。終了後に外して再トリガ可能にする） */
+  const [strawberryWindGust, setStrawberryWindGust] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.setItem(CROP_MOTION_STORAGE_KEY, cropMotion);
+  }, [cropMotion]);
+
+  const endStrawberryWindGust = useCallback(() => {
+    setStrawberryWindGust(false);
+  }, []);
+
+  const triggerStrawberryWindGust = () => {
+    setStrawberryWindGust(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setStrawberryWindGust(true));
+    });
+  };
 
   return (
-    <div className="flex flex-col min-h-[calc(100dvh-52px)] pb-24">
+    <div className="flex flex-col min-h-[calc(100dvh-44px)] pb-24">
 
       {/* ヘッダー */}
-      <div className="sticky top-0 z-20 bg-farm-bg/95 backdrop-blur-sm border-b border-gray-200 px-4 py-3">
+      <div className="sticky top-0 z-20 bg-farm-bg/95 backdrop-blur-sm border-b border-farm-border px-4 py-2.5">
         <div className="flex items-center gap-3 max-w-lg mx-auto">
           <Link
             to="/"
             className="flex items-center gap-1 text-farm-green-dark font-medium text-sm
-              hover:bg-farm-green/10 active:bg-farm-green/20 rounded-lg px-2 py-1 transition-colors"
+              hover:bg-farm-green-light rounded-lg px-2 py-1 transition-colors"
           >
-            ← 畑に戻る
+            ← 畑
           </Link>
-          <span className="flex-1 text-center font-bold text-farm-text truncate">
+          <span className="flex-1 text-center font-bold text-farm-text text-sm truncate">
             {headerTitle}
           </span>
           <span className={`
-            text-xs font-semibold px-2.5 py-1 rounded-full
+            text-[11px] font-semibold px-2 py-0.5 rounded-md
             ${cell.status === 'harvestable'
-              ? 'bg-yellow-100 text-yellow-700'
+              ? 'bg-farm-gold-light text-farm-gold border border-farm-gold/30'
               : cell.status === 'growing'
-                ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-600'
+                ? 'bg-farm-green-light text-farm-green-dark'
+                : 'bg-farm-panel text-farm-text-secondary'
             }
           `}>
             {STATUS_LABELS[cell.status]}
@@ -95,19 +174,62 @@ export function CellDetailPage() {
       {/* コンテンツエリア */}
       <div className="flex-1 px-4 py-4 max-w-lg mx-auto w-full space-y-4">
 
-        {/* ステージロードマップ（アドバンスドモデルのみ） */}
+        {/* ステージロードマップ */}
         {advancedState && (
           <StageRoadmap cropState={advancedState} />
         )}
 
-        {/* デイリーアドバイス（アドバンスドモデルのみ） */}
+        {/* デイリーアドバイス */}
         {advancedState && advancedState.dailyAdvice && (
           <DailyAdvice cropState={advancedState} />
         )}
 
+        {hasCrop && showCropImage && useStrawberryLayeredParts && (
+          <div
+            className="rounded-xl border border-dashed border-farm-border/90 bg-white/60 px-3 py-2.5 motion-reduce:hidden"
+          >
+            <p className="text-[10px] font-semibold text-farm-text-secondary mb-2 tracking-wide">
+              風アニメ（試験）
+            </p>
+            <button
+              type="button"
+              onClick={triggerStrawberryWindGust}
+              className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg border border-farm-border bg-white
+                text-farm-text hover:border-farm-green/45 hover:bg-farm-green-light/30 transition-colors"
+            >
+              風を吹く（右に傾いて戻る）
+            </button>
+          </div>
+        )}
+
+        {hasCrop && showCropImage && !useStrawberryLayeredParts && (
+          <div className="rounded-xl border border-dashed border-farm-border/90 bg-white/60 px-3 py-2.5">
+            <p className="text-[10px] font-semibold text-farm-text-secondary mb-2 tracking-wide">
+              揺れアニメ（試験・比較）
+            </p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="揺れアニメの種類">
+              {CROP_MOTION_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setCropMotion(opt.id)}
+                  className={`
+                    text-[10px] font-medium px-2 py-1 rounded-lg border transition-colors
+                    ${cropMotion === opt.id
+                      ? 'bg-farm-green-dark text-white border-farm-green-dark shadow-sm'
+                      : 'bg-white text-farm-text border-farm-border hover:border-farm-green/45'
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* 作物画像エリア */}
-        <div className="relative rounded-3xl overflow-hidden shadow-md aspect-square max-h-80 w-full">
-          {/* 土の背景画像（常に表示） */}
+        <div className="relative rounded-2xl overflow-hidden shadow-sm border border-farm-border aspect-square max-h-80 w-full">
           <img
             src={getSoilImage(cell)}
             alt="土"
@@ -117,66 +239,73 @@ export function CellDetailPage() {
               if (!img.src.includes('soil-empty')) img.src = `${BASE}assets/crops/soil/soil-empty.png`;
             }}
           />
-          {/* 作物画像（ステージ1・苗植え前は非表示） */}
           {hasCrop && showCropImage && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <CropDisplay
-                crop={cell.crop!}
-                stage={displayStage}
-                status={cell.status}
-                className="w-full h-full"
-                fillContainer
-              />
+              {useStrawberryLayeredParts ? (
+                <StrawberryStage8ReferenceSlot className="h-full w-full">
+                  <CropDisplay
+                    crop={cell.crop!}
+                    stage={displayStage}
+                    status={cell.status}
+                    className="h-full w-full"
+                    fillContainer
+                    pestRisk={advancedState?.pestRisk}
+                    windGustActive={strawberryWindGust}
+                    onWindGustEnd={endStrawberryWindGust}
+                  />
+                </StrawberryStage8ReferenceSlot>
+              ) : (
+                <AnimatedCropLayer mode={cropMotion}>
+                  <CropDisplay
+                    crop={cell.crop!}
+                    stage={displayStage}
+                    status={cell.status}
+                    className="w-full h-full"
+                    fillContainer
+                  />
+                </AnimatedCropLayer>
+              )}
             </div>
           )}
 
-          {/* ステータスバッジ */}
           {cell.status === 'harvestable' && (
-            <div className="absolute top-3 right-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2.5 py-1 rounded-full animate-bounce shadow-md">
-              🎉 収穫OK！
+            <div className="absolute top-3 right-3 z-[11] bg-farm-gold text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm">
+              収穫可能
             </div>
           )}
+          <WeatherOverlay effect={state.activeWeatherEffect} onDismiss={clearWeatherEffect} />
         </div>
 
-        {/* 作物の状態（アドバンスドモデルのみ） */}
+        {/* 作物の状態 */}
         {advancedState && (
           <ParameterDisplay cropState={advancedState} />
         )}
 
         {/* アクションエリア */}
-        <div className="bg-white/80 rounded-2xl px-4 py-4 shadow-sm">
-          <h3 className="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wide">
+        <div className="bg-white rounded-2xl border border-farm-border px-4 py-4 shadow-sm">
+          <h3 className="text-[11px] font-semibold text-farm-text-secondary mb-3 tracking-wide">
             アクション
           </h3>
           <ActionButtons cell={cell} />
         </div>
 
-        {/* アイテム在庫（アドバンスドモデルのみ） */}
+        {/* アイテム在庫 */}
         {isAdvanced && (
-          <div className="bg-white/60 rounded-2xl px-4 py-3 shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">アイテム在庫</h3>
-            <div className="flex flex-wrap gap-3 text-xs">
-              <span className="flex items-center gap-1 bg-green-50 px-2.5 py-1.5 rounded-lg">
-                🧪 肥料 <span className="font-bold">{state.fertilizer}g</span>
-              </span>
-              <span className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${state.insecticide > 0 ? 'bg-yellow-50' : 'bg-gray-100 opacity-60'}`}>
-                🐛 殺虫剤 <span className="font-bold">{state.insecticide}</span>
-              </span>
-              <span className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${state.fungicide > 0 ? 'bg-purple-50' : 'bg-gray-100 opacity-60'}`}>
-                🦠 殺菌剤 <span className="font-bold">{state.fungicide}</span>
-              </span>
-              <span className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg ${state.temperatureSheet > 0 ? 'bg-blue-50' : 'bg-gray-100 opacity-60'}`}>
-                🛡️ 防寒シート <span className="font-bold">{state.temperatureSheet}</span>
-              </span>
+          <div className="bg-white rounded-xl border border-farm-border px-4 py-3">
+            <h3 className="text-[11px] font-semibold text-farm-text-secondary mb-2 tracking-wide">アイテム在庫</h3>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <InventoryBadge label="肥料" value={`${state.fertilizer}g`} active={state.fertilizer > 0} color="green" />
+              <InventoryBadge label="殺虫剤" value={String(state.insecticide)} active={state.insecticide > 0} color="amber" />
+              <InventoryBadge label="殺菌剤" value={String(state.fungicide)} active={state.fungicide > 0} color="purple" />
+              <InventoryBadge label="防寒シート" value={String(state.temperatureSheet)} active={state.temperatureSheet > 0} color="blue" />
             </div>
-            <Link to="/shop" className="mt-2 block text-xs text-farm-green-dark underline hover:no-underline">
-              ショップでアイテムを購入する →
+            <Link to="/shop" className="mt-2 block text-xs text-farm-accent font-medium hover:underline">
+              ショップでアイテムを購入 →
             </Link>
           </div>
         )}
       </div>
 
-      {/* ステージ遷移モーダル（このセルのものだけ） */}
       {stageTransition && stageTransition.cellId === cellId && (
         <StageTransitionModal
           newStage={stageTransition.newStage}
@@ -184,7 +313,6 @@ export function CellDetailPage() {
         />
       )}
 
-      {/* 収穫結果モーダル */}
       {harvestResult && (
         <HarvestResultModal
           result={harvestResult}
@@ -192,5 +320,19 @@ export function CellDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+function InventoryBadge({ label, value, active, color }: { label: string; value: string; active: boolean; color: string }) {
+  const colorMap: Record<string, string> = {
+    green: active ? 'bg-farm-green-light text-farm-green-dark' : 'bg-gray-100 text-gray-400',
+    amber: active ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-400',
+    purple: active ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-400',
+    blue: active ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-400',
+  };
+  return (
+    <span className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium ${colorMap[color]}`}>
+      {label} <span className="font-bold">{value}</span>
+    </span>
   );
 }

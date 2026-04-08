@@ -9,7 +9,7 @@ interface Props {
 }
 
 function getStageLabel(cell: FarmCellState): string {
-  if (cell.status === 'harvestable') return '収穫OK！';
+  if (cell.status === 'harvestable') return '収穫可能';
   if (!cell.cropState) return '';
 
   if (cell.cropState.modelType === 'simple') {
@@ -37,7 +37,6 @@ function calcPercentage(cell: FarmCellState, mode: GaugeMode): number {
     return Math.min((stageProgress / pps) * 100, 100);
   }
 
-  // アドバンスドモデルは常に stageProgress を使う
   return cell.cropState.stageProgress;
 }
 
@@ -52,35 +51,28 @@ export function GrowthGauge({ cell, mode }: Props) {
   const percentage = calcPercentage(cell, mode);
   const stageLabel = getStageLabel(cell);
   const markers = getStageMarkers(cell, mode);
-  const stageProgress = getCellStageProgress(cell);
-
-  const comment = isHarvestable
-    ? '今が収穫のタイミングです！🎉'
-    : stageProgress >= 50
-      ? 'もう少しで次のステージへ！'
-      : 'じっくり育てましょう';
 
   return (
     <div className="w-full px-2 pb-2 pt-1">
       <div className="mb-1">
         <span className={`
-          text-[11px] font-semibold px-2 py-0.5 rounded-full leading-none
+          text-[10px] font-medium px-1.5 py-0.5 rounded leading-none
           ${isHarvestable
-            ? 'bg-yellow-300 text-yellow-900'
-            : 'bg-white/25 text-white'
+            ? 'bg-farm-gold/30 text-farm-gold'
+            : 'bg-white/15 text-white/80'
           }
         `}>
-          {stageLabel || (isHarvestable ? '収穫OK！' : '')}
+          {stageLabel || (isHarvestable ? '収穫可能' : '')}
         </span>
       </div>
 
-      <div className="relative h-3 bg-white/20 rounded-full overflow-hidden border border-white/10">
+      <div className="relative h-2 bg-white/15 rounded-full overflow-hidden">
         <div
           className={`
             h-full rounded-full transition-all duration-500
             ${isHarvestable
-              ? 'bg-gradient-to-r from-yellow-300 to-yellow-400'
-              : 'bg-gradient-to-r from-emerald-400 to-green-300'
+              ? 'bg-farm-gold'
+              : 'bg-white/60'
             }
           `}
           style={{ width: `${percentage}%` }}
@@ -88,17 +80,10 @@ export function GrowthGauge({ cell, mode }: Props) {
         {markers.map(pos => (
           <div
             key={pos}
-            className="absolute top-0 h-full w-0.5 bg-white/40"
+            className="absolute top-0 h-full w-px bg-white/30"
             style={{ left: `${pos}%` }}
           />
         ))}
-      </div>
-
-      <div className={`
-        text-[10px] mt-1 leading-tight
-        ${isHarvestable ? 'text-yellow-200 font-medium' : 'text-white/75'}
-      `}>
-        {comment}
       </div>
     </div>
   );
