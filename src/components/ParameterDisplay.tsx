@@ -1,5 +1,4 @@
 import { AdvancedCropState } from '../types';
-import { useGame } from '../context/GameContext';
 
 interface Props {
   cropState: AdvancedCropState;
@@ -51,14 +50,6 @@ function toWeedLabel(v: number): { text: string; color: string } {
   return { text: 'きれい', color: 'text-green-600' };
 }
 
-function toRotLabel(v: number): { text: string; color: string } {
-  if (v >= 80) return { text: '危険', color: 'text-red-600' };
-  if (v >= 60) return { text: '腐敗の恐れ', color: 'text-red-500' };
-  if (v >= 40) return { text: '注意', color: 'text-orange-600' };
-  if (v >= 20) return { text: 'やや注意', color: 'text-amber-600' };
-  return { text: '安定', color: 'text-green-600' };
-}
-
 interface ParamRowProps {
   icon: string;
   label: string;
@@ -99,11 +90,7 @@ function ParamRow({ icon, label, text, color, value, barColor }: ParamRowProps) 
 }
 
 export function ParameterDisplay({ cropState: s }: Props) {
-  const { state } = useGame();
   const stage = s.cultivationStage;
-  const isSugarMeasuredToday = s.sugarContentMeasuredDate != null
-    && state.currentGameDate != null
-    && s.sugarContentMeasuredDate === state.currentGameDate;
 
   return (
     <div className="bg-white rounded-2xl border border-farm-border px-4 py-3 shadow-sm">
@@ -125,50 +112,11 @@ export function ParameterDisplay({ cropState: s }: Props) {
           </div>
         )}
         {stage >= 6 && (
-          <>
-            <div className="flex items-center gap-2 py-1.5 border-t border-gray-100/80">
-              <span className="text-sm w-5 text-center opacity-70">🍓</span>
-              <span className="text-[11px] text-farm-text-secondary w-14 shrink-0">実の数</span>
-              <span className="text-sm font-semibold text-red-500">{s.fruitCount}個</span>
-            </div>
-            <ParamRow icon="📏" label="実の大きさ" value={s.fruitSize} text={`${s.fruitSize}%`} color="text-farm-accent" barColor="bg-farm-accent/70" />
-          </>
-        )}
-        {stage >= 7 && (
-          <>
-            <ParamRow icon="🔴" label="色づき" value={s.coloring} text={`${s.coloring}%`} color="text-red-500" barColor="bg-red-400" />
-            {isSugarMeasuredToday ? (
-              <ParamRow icon="🔬" label="糖度" value={s.sugarContentMeasured!} text={`${s.sugarContentMeasured}%`} color="text-pink-500" barColor="bg-pink-400" />
-            ) : (
-              <div className="flex items-center gap-2 py-1.5 border-b border-gray-100/80 last:border-0">
-                <span className="text-sm w-5 text-center opacity-70">🔬</span>
-                <span className="text-[11px] text-farm-text-secondary w-14 shrink-0">糖度</span>
-                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden" />
-                <div className="w-24 text-right">
-                  <span className="text-[11px] font-medium text-farm-text-secondary">? 未計測</span>
-                  {s.sugarContentMeasured != null && s.sugarContentMeasuredDate && (
-                    <div className="text-[9px] text-gray-400 leading-tight">
-                      前回 {s.sugarContentMeasured}%（{s.sugarContentMeasuredDate}）
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-        {stage === 8 && (
-          <ParamRow
-            icon="⏰"
-            label="熟しすぎ"
-            value={s.overripeRisk}
-            text={s.overripeRisk >= 50 ? '⚠ 注意' : `${s.overripeRisk}%`}
-            color={s.overripeRisk >= 50 ? 'text-red-600' : 'text-orange-500'}
-            barColor={s.overripeRisk >= 50 ? 'bg-red-500' : 'bg-orange-400'}
-          />
-        )}
-
-        {stage >= 6 && s.rotRisk > 0 && (
-          <ParamRow icon="🍂" label="腐りやすさ" value={s.rotRisk} {...toRotLabel(s.rotRisk)} barColor={getBarColor(s.rotRisk, true)} />
+          <div className="flex items-center gap-2 py-1.5 border-t border-gray-100/80">
+            <span className="text-sm w-5 text-center opacity-70">🍓</span>
+            <span className="text-[11px] text-farm-text-secondary w-14 shrink-0">実の数</span>
+            <span className="text-sm font-semibold text-red-500">{s.fruitCount}個</span>
+          </div>
         )}
       </div>
     </div>
