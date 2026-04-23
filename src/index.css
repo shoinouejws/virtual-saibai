@@ -54,10 +54,10 @@ body {
    *   位相がずれ、同期しすぎない自然な揺れになる（内側ラッパーに delay を付与する想定）。
    * - 角度・移動量は控えめ（〜1°前後）にして、画面全体がうるさくならないようにしている。
    */
-  /** 茎: 左右にわずかに振れる（軸は下端・`.strawberry-motion-stem` で指定） */
+  /** 茎: 左右にわずかに振れる（軸は下端・`.strawberry-motion-stem` で指定）。振幅は `--strawberry-loop-sway-scale`（既定1、試験 UI で2） */
   @keyframes strawberry-stem-rock {
-    0%, 100% { transform: rotate(-0.55deg); }
-    50% { transform: rotate(0.65deg); }
+    0%, 100% { transform: rotate(calc(-0.55deg * var(--strawberry-loop-sway-scale, 1))); }
+    50% { transform: rotate(calc(0.65deg * var(--strawberry-loop-sway-scale, 1))); }
   }
 
   /**
@@ -65,8 +65,16 @@ body {
    * 茎より振幅を大きくし、風で葉先が動くイメージ。
    */
   @keyframes strawberry-leaf-sway {
-    0%, 100% { transform: rotate(-0.8deg) translateX(-0.8px); }
-    50% { transform: rotate(0.8deg) translateX(0.8px); }
+    0%, 100% {
+      transform:
+        rotate(calc(-0.8deg * var(--strawberry-loop-sway-scale, 1)))
+        translateX(calc(-0.8px * var(--strawberry-loop-sway-scale, 1)));
+    }
+    50% {
+      transform:
+        rotate(calc(0.8deg * var(--strawberry-loop-sway-scale, 1)))
+        translateX(calc(0.8px * var(--strawberry-loop-sway-scale, 1)));
+    }
   }
 
   /**
@@ -74,8 +82,12 @@ body {
    * 茎・葉より縦方向を強めにして、実だけが軽く見えるようにしている。
    */
   @keyframes strawberry-fruit-bob {
-    0%, 100% { transform: translateY(0) rotate(-0.8deg); }
-    50% { transform: translateY(-1.2px) rotate(0.8deg); }
+    0%, 100% { transform: translateY(0) rotate(calc(-0.8deg * var(--strawberry-loop-sway-scale, 1))); }
+    50% {
+      transform:
+        translateY(calc(-1.2px * var(--strawberry-loop-sway-scale, 1)))
+        rotate(calc(0.8deg * var(--strawberry-loop-sway-scale, 1)));
+    }
   }
 
   /**

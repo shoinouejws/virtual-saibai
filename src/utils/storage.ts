@@ -1,7 +1,7 @@
 import { GameState } from '../types';
 
 const STORAGE_KEY = 'virtual-saibai-game';
-const SCHEMA_VERSION = 4; // activeWeatherEffect を GameState に追加
+const SCHEMA_VERSION = 5; // sweetness → sugarContent リネーム + 糖度計測フィールド追加
 
 interface VersionedState {
   version: number;

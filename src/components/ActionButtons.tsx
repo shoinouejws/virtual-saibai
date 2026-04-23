@@ -180,6 +180,7 @@ export function ActionButtons({ cell }: Props) {
       case 7:
         actions.push({ key: 'water', label: '水やり(少なめ)', icon: '💧', disabled: cs.moisture >= 85, onPress: () => game.strawberryWater(cellId, 'light') });
         actions.push({ key: 'trim', label: '葉の整理', icon: '✂️', disabled: false, onPress: () => game.strawberryTrimLeaves(cellId, 'normal'), highlight: true });
+        actions.push({ key: 'measureSugar', label: '糖度計測', icon: '🔬', disabled: false, onPress: () => game.strawberryMeasureSugarContent(cellId) });
         actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'temp', label: '温度調整', icon: '🌡️', disabled: !hasSheet, onPress: () => game.strawberryTempAdjust(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
@@ -188,9 +189,11 @@ export function ActionButtons({ cell }: Props) {
 
       case 8:
         actions.push({ key: 'harvest', label: '収穫する', icon: '🍓', disabled: false, onPress: () => game.harvest(cellId), highlight: true });
+        actions.push({ key: 'measureSugar', label: '糖度計測', icon: '🔬', disabled: false, onPress: () => game.strawberryMeasureSugarContent(cellId) });
         actions.push({ key: 'water', label: '少量の水やり', icon: '💧', disabled: cs.moisture >= 70, onPress: () => game.strawberryWater(cellId, 'light') });
         actions.push({ key: 'weed', label: '除草', icon: '🌿', disabled: cs.weedAmount <= 0, onPress: () => game.strawberryWeed(cellId) });
         actions.push({ key: 'disease', label: '病気対策', icon: '🦠', disabled: !hasFungicide, onPress: () => game.strawberryDiseaseControl(cellId) });
+        actions.push({ key: 'pest', label: '害虫対策', icon: '🐛', disabled: !hasInsecticide, onPress: () => game.strawberryPestControl(cellId) });
         break;
 
       default:

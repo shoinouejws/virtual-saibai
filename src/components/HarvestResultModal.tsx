@@ -43,10 +43,10 @@ function toPackDisplay(berries: number): { packs: number; label: string } {
   return { packs, label: `${packs}パック（約${berries}粒）` };
 }
 
-function sweetnessInfo(sweetness: number): { text: string; color: string } {
-  if (sweetness >= 70) return { text: 'とても甘い', color: 'text-pink-600' };
-  if (sweetness >= 50) return { text: '甘い', color: 'text-pink-500' };
-  if (sweetness >= 30) return { text: 'ほどほど', color: 'text-amber-600' };
+function sugarContentInfo(value: number): { text: string; color: string } {
+  if (value >= 70) return { text: 'とても甘い', color: 'text-pink-600' };
+  if (value >= 50) return { text: '甘い', color: 'text-pink-500' };
+  if (value >= 30) return { text: 'ほどほど', color: 'text-amber-600' };
   return { text: 'あまり甘くない', color: 'text-gray-500' };
 }
 
@@ -58,7 +58,7 @@ export function HarvestResultModal({ result, onClose }: Props) {
 
   const hints = isAdvanced && record.qualityScore !== undefined
     ? getImprovementHints({
-        sweetness: record.sweetness ?? 0,
+        sugarContent: record.sugarContent ?? 0,
         coloring: 0,
         qualityDamage: 0,
         rotRisk: 0,
@@ -68,7 +68,7 @@ export function HarvestResultModal({ result, onClose }: Props) {
       } as unknown as AdvancedCropState)
     : [];
 
-  const sweet = record.sweetness !== undefined ? sweetnessInfo(record.sweetness) : null;
+  const sweet = record.sugarContent !== undefined ? sugarContentInfo(record.sugarContent) : null;
 
   return (
     <div
@@ -109,7 +109,7 @@ export function HarvestResultModal({ result, onClose }: Props) {
               <div className="flex gap-2 flex-wrap">
                 <StatCard label="収穫した実" value={`${fruitCount}個`} />
                 {totalWeight > 0 && <StatCard label="合計重量" value={`${totalWeight}g`} />}
-                {sweet && <StatCard label="甘さ" value={sweet.text} valueColor={sweet.color} />}
+                {sweet && <StatCard label="糖度" value={sweet.text} valueColor={sweet.color} />}
               </div>
             </section>
           ) : (

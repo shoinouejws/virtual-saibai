@@ -28,7 +28,9 @@ export function createHarvestReadyAdvancedCropState(): AdvancedCropState {
     flowerCount: 0,
     fruitCount: 10,
     fruitSize: 85,
-    sweetness: 75,
+    sugarContent: 75,
+    sugarContentMeasured: null,
+    sugarContentMeasuredDate: null,
     coloring: 85,
     qualityDamage: 0,
     qualityBonus: 0,
@@ -62,7 +64,9 @@ export function createInitialAdvancedCropState(): AdvancedCropState {
     flowerCount: 0,
     fruitCount: 0,
     fruitSize: 0,
-    sweetness: 0,
+    sugarContent: 0,
+    sugarContentMeasured: null,
+    sugarContentMeasuredDate: null,
     coloring: 0,
     qualityDamage: 0,
     qualityBonus: 0,
@@ -219,9 +223,9 @@ function applyStageEffects(s: AdvancedCropState): AdvancedCropState {
       break;
     }
     case 7: {
-      // 成熟期: 色づき・甘さ・実の大きさが増す
+      // 成熟期: 色づき・糖度・実の大きさが増す
       next.coloring = clamp(s.coloring + 5);
-      next.sweetness = clamp(s.sweetness + 6);
+      next.sugarContent = clamp(s.sugarContent + 6);
       const goodCond = s.moisture >= 35 && s.moisture <= 65 && s.stress <= 39;
       next.fruitSize = clamp(s.fruitSize + (goodCond ? 5 : 3));
       break;
@@ -309,7 +313,7 @@ function updateStageProgress(s: AdvancedCropState): AdvancedCropState {
     case 7: {
       delta = 10;
       if (s.coloring >= 60) delta += 5;
-      if (s.sweetness >= 50) delta += 5;
+      if (s.sugarContent >= 50) delta += 5;
       break;
     }
     default:
@@ -327,7 +331,7 @@ function checkTransitionConditions(s: AdvancedCropState): boolean {
     case 4: return s.daysInStage >= 4 && s.flowerCount >= 5 && s.health >= 45;
     case 5: return s.daysInStage >= 3 && s.fruitCount >= 1;
     case 6: return s.daysInStage >= 5 && s.fruitSize >= 60 && s.health >= 35 && s.fruitCount >= 1;
-    case 7: return s.daysInStage >= 3 && s.fruitSize >= 80 && s.coloring >= 80 && s.sweetness >= 60;
+    case 7: return s.daysInStage >= 3 && s.fruitSize >= 80 && s.coloring >= 80 && s.sugarContent >= 60;
     case 8: return false; // プレイヤーの収穫アクションのみ
     default: return false;
   }
@@ -359,7 +363,7 @@ export function generateDailyAdvice(s: AdvancedCropState): string {
   }
   if (s.cultivationStage === 5) return '🌸 花が咲き始めました！受粉を助けてあげましょう';
   if (s.cultivationStage === 6 && s.fruitCount > 12) return '✂️ 実が多すぎます。摘果すると1粒が大きく甘くなります';
-  if (s.cultivationStage === 7) return '🍓 実が色づいてきました。水は控えめにすると甘くなります';
+  if (s.cultivationStage === 7) return '🍓 実が色づいてきました。水は控えめにすると糖度が高くなり、甘くなります';
   if (s.cultivationStage === 1 && !s.isTilled) return '⛏️ まず土を整えましょう。耕してから苗を植えます';
   if (s.cultivationStage === 1) return '🌱 準備が整ったら苗を植えましょう';
   if (s.cultivationStage === 2 && !s.isPlanted) return '🌱 苗を植えましょう！根付きが栽培の始まりです';
@@ -532,6 +536,15 @@ export function actionThinFruits(s: AdvancedCropState): AdvancedCropState {
   };
 }
 
+export function actionMeasureSugarContent(s: AdvancedCropState, gameDate: string): AdvancedCropState {
+  if (s.cultivationStage < 7) return s;
+  return {
+    ...s,
+    sugarContentMeasured: s.sugarContent ?? 0,
+    sugarContentMeasuredDate: gameDate,
+  };
+}
+
 // ===== 収穫結果計算 =====
 
 export interface HarvestResult {
@@ -539,7 +552,7 @@ export interface HarvestResult {
   totalWeight: number;
   qualityScore: number;
   qualityRank: QualityRank;
-  sweetness: number;
+  sugarContent: number;
   exchangeQuantity: number;
   record: Omit<HarvestRecord, 'crop' | 'harvestedAt'>;
 }
@@ -553,7 +566,7 @@ export function calculateHarvestResult(s: AdvancedCropState): HarvestResult {
   const totalWeight = Math.round(fruitCount * 15 * sizeMultiplier * healthMultiplier);
 
   // 品質スコア
-  const sweetnessBonus = s.sweetness * 0.3;
+  const sweetnessBonus = s.sugarContent * 0.3;
   const coloringBonus = s.coloring * 0.2;
   const healthBonus = s.health * 0.1;
   const damagePenalty = s.qualityDamage;
@@ -577,7 +590,7 @@ export function calculateHarvestResult(s: AdvancedCropState): HarvestResult {
     totalWeight,
     qualityScore,
     qualityRank,
-    sweetness: s.sweetness,
+    sugarContent: s.sugarContent,
     exchangeQuantity,
     record: {
       exchangeQuantity,
@@ -585,7 +598,7 @@ export function calculateHarvestResult(s: AdvancedCropState): HarvestResult {
       qualityScore,
       fruitCount,
       totalWeight,
-      sweetness: s.sweetness,
+      sugarContent: s.sugarContent,
     },
   };
 }
@@ -627,7 +640,7 @@ export const STAGE_TRANSITION_MESSAGES: Record<number, { title: string; body: st
 
 export function getImprovementHints(s: AdvancedCropState): string[] {
   const hints: Array<{ condition: boolean; hint: string }> = [
-    { condition: s.sweetness < 50, hint: '成熟期に水を控えめにすると、糖度が上がりやすくなります' },
+    { condition: s.sugarContent < 50, hint: '成熟期に水を控えめにすると、糖度が上がりやすくなります' },
     { condition: s.coloring < 70, hint: '葉の整理で日光を当てると、もっときれいに赤くなります' },
     { condition: s.qualityDamage >= 20, hint: '害虫・病気対策をこまめに行うと、見た目がぐっとよくなります' },
     { condition: s.rotRisk >= 40, hint: '水やりを控えめにし、風通しを確保すると傷みにくくなります' },
@@ -662,7 +675,7 @@ export function applyEvent(s: AdvancedCropState, eventId: EventId): AdvancedCrop
       next.diseaseRisk = clamp(s.diseaseRisk + (s.cultivationStage >= 7 ? 8 : 5));
       if (s.cultivationStage >= 7) {
         next.rotRisk = clamp(s.rotRisk + 12);
-        next.sweetness = clamp(s.sweetness - 3);
+        next.sugarContent = clamp(s.sugarContent - 3);
       }
       break;
     case 'highTemp':
@@ -675,7 +688,7 @@ export function applyEvent(s: AdvancedCropState, eventId: EventId): AdvancedCrop
         next.overripeRisk = clamp(s.overripeRisk + 8);
       }
       if (s.cultivationStage === 7) {
-        next.sweetness = clamp(s.sweetness - 5);
+        next.sugarContent = clamp(s.sugarContent - 5);
       }
       break;
     case 'lowTemp':

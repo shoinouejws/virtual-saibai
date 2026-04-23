@@ -1,5 +1,10 @@
 node_modules
 dist
+# 開発メモ（ローカル専用・リポジトリに含めない）
+docs/dev-memo/
 .DS_Store
 *.local
 tsconfig.app.tsbuildinfo
+script/*
+# アーカイブ（既往の風アニメ APNG 等・リポジトリに含めない）
+public/assets/_archive/

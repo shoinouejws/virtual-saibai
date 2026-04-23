@@ -153,7 +153,16 @@ export function ShopPage() {
         ))}
       </div>
 
-      <p className="text-center text-xs text-farm-text-secondary mt-8">
+      <div className="mt-6 text-center">
+        <Link
+          to="/tools"
+          className="text-xs text-farm-green-dark font-medium hover:underline"
+        >
+          道具一覧を見る（繰り返し使える計測器具など） →
+        </Link>
+      </div>
+
+      <p className="text-center text-xs text-farm-text-secondary mt-4">
         ※ プロトタイプのため、実際の決済は発生しません
       </p>
     </div>

@@ -51,9 +51,6 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
   /** FarmPage 畑マスと同一の 1:1 基準スロット＋fillContainer で段階8の相対座標を解釈する */
   const strawberryStage8Layered =
     showCropImage && cell.crop === 'strawberry' && displayStage === 8;
-  const pestRiskForDisplay =
-    cell.cropState?.modelType === 'advanced' ? cell.cropState.pestRisk : undefined;
-
   const stageLabel = (() => {
     if (!cell.crop || !cell.cropState) return null;
     if (cell.cropState.modelType === 'advanced') {
@@ -127,7 +124,6 @@ export function FarmCell({ cell, isAnimating, gaugeMode, growthAnim, onSelect }:
                   status={cell.status}
                   className="h-full w-full"
                   fillContainer
-                  pestRisk={pestRiskForDisplay}
                 />
               </StrawberryStage8ReferenceSlot>
             ) : (

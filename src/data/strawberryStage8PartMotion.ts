@@ -5,6 +5,7 @@
  * 調整の目安:
  * - **ループ揺れの位相だけ**変えたい → `getStrawberryPartMotion` の `delay` のみ編集
  * - **ループ揺れの形・速さ** → `index.css` の `@keyframes` と `animation: ... Ns` の秒数
+ * - **ループ揺れの振幅を一括スケール** → パーツの内側 div に `--strawberry-loop-sway-scale`（セル詳細「揺れ2倍」で 2。`@keyframes` は `calc(... * var(--strawberry-loop-sway-scale, 1))`）
  * - **風の強さ・横ずれ** → `index.css` の `@keyframes strawberry-wind-gust-*`
  * - **風の伝わり（どのパーツが先に動くか）** → `WIND_SPECS` の `delayMs`
  */

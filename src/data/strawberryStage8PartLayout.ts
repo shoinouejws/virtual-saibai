@@ -52,13 +52,26 @@ const LEAF_PART_WORM_EATEN_REL_PATH: Partial<Record<string, string>> = {
   leafR: 'worm-eaten/strawberry-8_leaf-right_worm-eaten.png',
 };
 
+/** 実（左）の病気差し替え種別 */
+export type StrawberryFruitDisease = 'none' | 'malformed' | 'udonko';
+
+const FRUIT_LEFT_DISEASE_REL_PATH: Record<Exclude<StrawberryFruitDisease, 'none'>, string> = {
+  malformed: 'diseased/strawberry-8_fruit-left_malformed.png',
+  udonko: 'diseased/strawberry-8_fruit-left_udonko.png',
+};
+
 /**
- * `public/assets/crops/strawberry/strawberry-8/` からの相対パス（通常画像 or `worm-eaten/` 下）。
+ * `public/assets/crops/strawberry/strawberry-8/` からの相対パス。
+ * 害虫リスクによる葉の食害テクスチャ、および果実の病気テクスチャを解決する。
  */
 export function resolveStrawberryStage8PartAssetRelPath(
   part: StrawberryStage8PartDefinition,
   pestRisk: number | undefined,
+  fruitDisease?: StrawberryFruitDisease,
 ): string {
+  if (part.id === 'fruitL' && fruitDisease && fruitDisease !== 'none') {
+    return FRUIT_LEFT_DISEASE_REL_PATH[fruitDisease];
+  }
   if (
     pestRisk === undefined ||
     pestRisk < STRAWBERRY_STAGE8_LEAF_WORM_EATEN_PEST_THRESHOLD

@@ -9,7 +9,7 @@ import {
   actionTillSoil, actionMakeRidge, actionLayMulch, actionBaseFertilizer,
   actionPlantSeedling, actionWater, actionFertilize, actionWeed, actionTrimLeaves,
   actionPestControl, actionDiseaseControl, actionTempAdjust, actionPollinate,
-  actionThinFlowers, actionThinFruits, calculateHarvestResult,
+  actionThinFlowers, actionThinFruits, actionMeasureSugarContent, calculateHarvestResult,
   applyEvent, EventId,
 } from '../utils/strawberryEngine';
 
@@ -492,6 +492,25 @@ export function useGameState() {
     updateAdvancedCell(cellId, actionThinFruits, '✂️ 摘果しました！1粒が大きく甘くなります');
   }, [updateAdvancedCell]);
 
+  const strawberryMeasureSugarContent = useCallback((cellId: number) => {
+    const gameDate = state.currentGameDate ?? todayString();
+    let measured: number | null = null;
+    setState(prev => {
+      const cell = prev.cells.find(c => c.id === cellId);
+      if (!cell || !cell.cropState || cell.cropState.modelType !== 'advanced') return prev;
+      const newCropState = actionMeasureSugarContent(cell.cropState, gameDate);
+      measured = newCropState.sugarContentMeasured;
+      return {
+        ...prev,
+        cells: prev.cells.map(c =>
+          c.id === cellId ? { ...c, cropState: newCropState } : c
+        ),
+      };
+    });
+    triggerAnimation(cellId);
+    notify(`🔬 糖度を計測しました${measured != null ? `（${measured}%）` : ''}`);
+  }, [state.currentGameDate, triggerAnimation, notify]);
+
   // ===== 収穫 =====
 
   const harvest = useCallback((cellId: number) => {
@@ -660,6 +679,7 @@ export function useGameState() {
     strawberryPollinate,
     strawberryThinFlowers,
     strawberryThinFruits,
+    strawberryMeasureSugarContent,
     harvest,
     applyGameEvent,
     // ショップ

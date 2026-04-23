@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { CROP_DEFINITIONS } from '../data/crops';
@@ -19,6 +19,12 @@ import { HarvestResultModal } from '../components/HarvestResultModal';
 import { WeatherOverlay } from '../components/WeatherOverlay';
 import { getCellDisplayStage, FarmCellState } from '../types';
 import { getSoilImage } from '../utils/soilImage';
+import {
+  parseStrawberryBreezeVariantId,
+  STRAWBERRY_BREEZE_VARIANT_OPTIONS,
+  STRAWBERRY_BREEZE_VARIANT_STORAGE_KEY,
+  type StrawberryBreezeVariantId,
+} from '../data/strawberryStage8Breeze';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -43,6 +49,11 @@ function shouldShowCropImage(cell: FarmCellState, displayStage: number): boolean
 function readStoredCropMotion(): CropMotionPreviewId {
   if (typeof window === 'undefined') return 'wave';
   return parseCropMotionPreviewId(sessionStorage.getItem(CROP_MOTION_STORAGE_KEY)) ?? 'wave';
+}
+
+function readStoredStrawberryBreezeVariant(): StrawberryBreezeVariantId {
+  if (typeof window === 'undefined') return '15fps';
+  return parseStrawberryBreezeVariantId(sessionStorage.getItem(STRAWBERRY_BREEZE_VARIANT_STORAGE_KEY)) ?? '15fps';
 }
 
 /** 作物レイヤーに CSS の揺れパターンを適用（試験用）
@@ -118,28 +129,30 @@ export function CellDetailPage() {
 
   const hasCrop = cell.status !== 'empty' && cell.status !== 'tilled';
   const showCropImage = shouldShowCropImage(cell, displayStage);
-  /** 段階8いちごは分割パーツ個別アニメのため、全体ラッパーの揺れは付けない */
-  const useStrawberryLayeredParts =
-    cell.crop === 'strawberry' && displayStage === 8;
+  /** Stage-8 strawberry: static by default; breeze（WebP 等）をボタン再生のみ; 外側 CSS 揺れラッパなし */
+  const useStrawberryStage8Apng = cell.crop === 'strawberry' && displayStage === 8;
 
   const [cropMotion, setCropMotion] = useState<CropMotionPreviewId>(readStoredCropMotion);
-  /** いちご段階8・風アニメーション（ラッパーに一時クラス。終了後に外して再トリガ可能にする） */
-  const [strawberryWindGust, setStrawberryWindGust] = useState(false);
+  const [strawberryBreezeNonce, setStrawberryBreezeNonce] = useState(0);
+  const [strawberryBreezeVariant, setStrawberryBreezeVariant] =
+    useState<StrawberryBreezeVariantId>(readStoredStrawberryBreezeVariant);
+  const [reduceMotionUi, setReduceMotionUi] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduceMotionUi(mq.matches);
+    const onChange = () => setReduceMotionUi(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     sessionStorage.setItem(CROP_MOTION_STORAGE_KEY, cropMotion);
   }, [cropMotion]);
 
-  const endStrawberryWindGust = useCallback(() => {
-    setStrawberryWindGust(false);
-  }, []);
-
-  const triggerStrawberryWindGust = () => {
-    setStrawberryWindGust(false);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setStrawberryWindGust(true));
-    });
-  };
+  useEffect(() => {
+    sessionStorage.setItem(STRAWBERRY_BREEZE_VARIANT_STORAGE_KEY, strawberryBreezeVariant);
+  }, [strawberryBreezeVariant]);
 
   return (
     <div className="flex flex-col min-h-[calc(100dvh-44px)] pb-24">
@@ -184,25 +197,52 @@ export function CellDetailPage() {
           <DailyAdvice cropState={advancedState} />
         )}
 
-        {hasCrop && showCropImage && useStrawberryLayeredParts && (
-          <div
-            className="rounded-xl border border-dashed border-farm-border/90 bg-white/60 px-3 py-2.5 motion-reduce:hidden"
-          >
-            <p className="text-[10px] font-semibold text-farm-text-secondary mb-2 tracking-wide">
+        {hasCrop && showCropImage && useStrawberryStage8Apng && (
+          <div className="rounded-xl border border-farm-border/80 bg-white/70 px-3 py-2.5 space-y-2.5">
+            <p className="text-[10px] font-semibold text-farm-text-secondary tracking-wide">
               風アニメ（試験）
             </p>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="風アニメのフレームレート">
+              {STRAWBERRY_BREEZE_VARIANT_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setStrawberryBreezeVariant(opt.id)}
+                  className={`
+                    text-[10px] font-medium px-2 py-1 rounded-lg border transition-colors
+                    ${strawberryBreezeVariant === opt.id
+                      ? 'bg-farm-green-dark text-white border-farm-green-dark shadow-sm'
+                      : 'bg-white text-farm-text border-farm-border hover:border-farm-green/45'
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
-              onClick={triggerStrawberryWindGust}
-              className="text-[10px] font-medium px-2.5 py-1.5 rounded-lg border border-farm-border bg-white
-                text-farm-text hover:border-farm-green/45 hover:bg-farm-green-light/30 transition-colors"
+              onClick={() => setStrawberryBreezeNonce(n => n + 1)}
+              disabled={reduceMotionUi}
+              className={`
+                w-full text-xs font-semibold py-2 rounded-lg border transition-colors
+                ${reduceMotionUi
+                  ? 'bg-farm-panel text-farm-text-secondary border-farm-border cursor-not-allowed'
+                  : 'bg-farm-green-dark text-white border-farm-green-dark hover:opacity-95 active:scale-[0.99]'
+                }
+              `}
             >
-              風を吹く（右に傾いて戻る）
+              ▶風アニメーション再生
             </button>
+            {reduceMotionUi && (
+              <p className="text-[10px] text-farm-text-secondary text-center">
+                動きを抑える表示設定のため、再生できません
+              </p>
+            )}
           </div>
         )}
 
-        {hasCrop && showCropImage && !useStrawberryLayeredParts && (
+        {hasCrop && showCropImage && !useStrawberryStage8Apng && (
           <div className="rounded-xl border border-dashed border-farm-border/90 bg-white/60 px-3 py-2.5">
             <p className="text-[10px] font-semibold text-farm-text-secondary mb-2 tracking-wide">
               揺れアニメ（試験・比較）
@@ -241,7 +281,7 @@ export function CellDetailPage() {
           />
           {hasCrop && showCropImage && (
             <div className="absolute inset-0 flex items-center justify-center">
-              {useStrawberryLayeredParts ? (
+              {useStrawberryStage8Apng ? (
                 <StrawberryStage8ReferenceSlot className="h-full w-full">
                   <CropDisplay
                     crop={cell.crop!}
@@ -249,9 +289,8 @@ export function CellDetailPage() {
                     status={cell.status}
                     className="h-full w-full"
                     fillContainer
-                    pestRisk={advancedState?.pestRisk}
-                    windGustActive={strawberryWindGust}
-                    onWindGustEnd={endStrawberryWindGust}
+                    strawberryBreezeTrigger={strawberryBreezeNonce}
+                    strawberryBreezeVariant={strawberryBreezeVariant}
                   />
                 </StrawberryStage8ReferenceSlot>
               ) : (
@@ -299,9 +338,14 @@ export function CellDetailPage() {
               <InventoryBadge label="殺菌剤" value={String(state.fungicide)} active={state.fungicide > 0} color="purple" />
               <InventoryBadge label="防寒シート" value={String(state.temperatureSheet)} active={state.temperatureSheet > 0} color="blue" />
             </div>
-            <Link to="/shop" className="mt-2 block text-xs text-farm-accent font-medium hover:underline">
-              ショップでアイテムを購入 →
-            </Link>
+            <div className="flex gap-4 mt-2">
+              <Link to="/shop" className="text-xs text-farm-accent font-medium hover:underline">
+                ショップでアイテムを購入 →
+              </Link>
+              <Link to="/tools" className="text-xs text-farm-green-dark font-medium hover:underline">
+                道具一覧 →
+              </Link>
+            </div>
           </div>
         )}
       </div>

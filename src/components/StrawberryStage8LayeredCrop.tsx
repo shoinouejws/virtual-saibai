@@ -8,6 +8,7 @@ import { strawberryStage8PartPositionStyle } from '../data/strawberryStage8PartM
 import {
   resolveStrawberryStage8PartAssetRelPath,
   type StrawberryStage8PartDefinition,
+  type StrawberryFruitDisease,
 } from '../data/strawberryStage8PartLayout';
 
 const DIR = `${import.meta.env.BASE_URL}assets/crops/strawberry/strawberry-8/`;
@@ -16,12 +17,16 @@ interface Props {
   parts: StrawberryStage8PartDefinition[];
   /** アドバンスドモデルの害虫リスク。閾値以上で葉パーツを食害画像に差し替え */
   pestRisk?: number;
+  /** 実（左）の病気テクスチャ差し替え */
+  fruitLeftDisease?: StrawberryFruitDisease;
   /** false のときアニメなし（静止の重ね表示のみ） */
   motionEnabled?: boolean;
   /** 一発の風（パーツ別の振幅・遅延）。ループ揺れの外側ラッパーで再生 */
   windGustActive?: boolean;
   /** 風アニメが一通り終わったとき（最遅パーツの delay + duration 後） */
   onWindGustEnd?: () => void;
+  /** 通常ループ揺れの振幅を2倍（`index.css` の `--strawberry-loop-sway-scale`） */
+  loopSwayAmplitudeDouble?: boolean;
   className?: string;
 }
 
@@ -32,9 +37,11 @@ interface Props {
 export function StrawberryStage8LayeredCrop({
   parts,
   pestRisk,
+  fruitLeftDisease,
   motionEnabled = true,
   windGustActive = false,
   onWindGustEnd,
+  loopSwayAmplitudeDouble = false,
   className = '',
 }: Props) {
   const sorted = [...parts].filter(p => p.visible).sort((a, b) => a.zIndex - b.zIndex);
@@ -63,7 +70,7 @@ export function StrawberryStage8LayeredCrop({
   return (
     <div ref={layoutRef} className={`relative h-full w-full min-h-0 ${className}`}>
       {sorted.map(p => {
-        const rel = resolveStrawberryStage8PartAssetRelPath(p, pestRisk);
+        const rel = resolveStrawberryStage8PartAssetRelPath(p, pestRisk, fruitLeftDisease);
         const src = `${DIR}${rel}`;
         const motion = getStrawberryPartMotion(p.id);
         const wind = getStrawberryPartWindGust(p.id);
@@ -88,7 +95,10 @@ export function StrawberryStage8LayeredCrop({
                 `}
                 style={
                   motionEnabled
-                    ? { animationDelay: motion.delay }
+                    ? {
+                        animationDelay: motion.delay,
+                        ...(loopSwayAmplitudeDouble ? { '--strawberry-loop-sway-scale': 2 } : {}),
+                      }
                     : undefined
                 }
               >

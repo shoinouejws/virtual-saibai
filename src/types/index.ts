@@ -31,7 +31,9 @@ export interface AdvancedCropState {
   flowerCount: number;         // 花の数
   fruitCount: number;          // 実の数
   fruitSize: number;           // 実の大きさ 0〜100
-  sweetness: number;           // 甘さ 0〜100
+  sugarContent: number;        // 糖度（内部値） 0〜100
+  sugarContentMeasured: number | null;  // 最新の計測値（未計測なら null）
+  sugarContentMeasuredDate: string | null; // 計測日（ISO 8601 日付）
   coloring: number;            // 色づき 0〜100
   qualityDamage: number;       // 品質被害蓄積 0〜100
   qualityBonus: number;        // 品質補正（摘花・摘果ボーナス）
@@ -66,7 +68,7 @@ export interface HarvestRecord {
   qualityScore?: number;
   fruitCount?: number;
   totalWeight?: number;
-  sweetness?: number;
+  sugarContent?: number;
 }
 
 export type WeatherEffectType = 'rain' | 'longRain' | 'highTemp' | 'pest' | 'birdDamage' | null;

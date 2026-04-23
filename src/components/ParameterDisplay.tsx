@@ -1,4 +1,5 @@
 import { AdvancedCropState } from '../types';
+import { useGame } from '../context/GameContext';
 
 interface Props {
   cropState: AdvancedCropState;
@@ -98,7 +99,11 @@ function ParamRow({ icon, label, text, color, value, barColor }: ParamRowProps) 
 }
 
 export function ParameterDisplay({ cropState: s }: Props) {
+  const { state } = useGame();
   const stage = s.cultivationStage;
+  const isSugarMeasuredToday = s.sugarContentMeasuredDate != null
+    && state.currentGameDate != null
+    && s.sugarContentMeasuredDate === state.currentGameDate;
 
   return (
     <div className="bg-white rounded-2xl border border-farm-border px-4 py-3 shadow-sm">
@@ -132,7 +137,23 @@ export function ParameterDisplay({ cropState: s }: Props) {
         {stage >= 7 && (
           <>
             <ParamRow icon="🔴" label="色づき" value={s.coloring} text={`${s.coloring}%`} color="text-red-500" barColor="bg-red-400" />
-            <ParamRow icon="🍬" label="甘さ" value={s.sweetness} text={`${s.sweetness}%`} color="text-pink-500" barColor="bg-pink-400" />
+            {isSugarMeasuredToday ? (
+              <ParamRow icon="🔬" label="糖度" value={s.sugarContentMeasured!} text={`${s.sugarContentMeasured}%`} color="text-pink-500" barColor="bg-pink-400" />
+            ) : (
+              <div className="flex items-center gap-2 py-1.5 border-b border-gray-100/80 last:border-0">
+                <span className="text-sm w-5 text-center opacity-70">🔬</span>
+                <span className="text-[11px] text-farm-text-secondary w-14 shrink-0">糖度</span>
+                <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden" />
+                <div className="w-24 text-right">
+                  <span className="text-[11px] font-medium text-farm-text-secondary">? 未計測</span>
+                  {s.sugarContentMeasured != null && s.sugarContentMeasuredDate && (
+                    <div className="text-[9px] text-gray-400 leading-tight">
+                      前回 {s.sugarContentMeasured}%（{s.sugarContentMeasuredDate}）
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
         {stage === 8 && (

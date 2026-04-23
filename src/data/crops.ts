@@ -30,7 +30,7 @@ export const CROP_DEFINITIONS: Record<CropType, CropDefinition> = {
       'assets/crops/strawberry/strawberry-5.png',    // S5: 開花期
       'assets/crops/strawberry/strawberry-6.png',    // S6: 果実肥大期
       'assets/crops/strawberry/strawberry-7.png',    // S7: 成熟期
-      'assets/crops/strawberry/strawberry-8/strawberry-8.png',    // S8: 収穫可能期
+      'assets/crops/strawberry/strawberry-8/20260420_strawberry-8.png',    // S8: 収穫可能期
     ],
     stageNames: [
       '栽培準備期',
