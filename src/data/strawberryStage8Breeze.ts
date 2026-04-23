@@ -25,7 +25,7 @@ const BREEZE_ANIM_BASE = 'assets/crops/strawberry/strawberry-8/animation';
 
 const BREEZE_ANIMATED_PATH: Record<StrawberryBreezeVariantId, string> = {
   '6p7ms': `${BREEZE_ANIM_BASE}/strawberry-8_breeze_150ms.png`,
-  '10fps': `${BREEZE_ANIM_BASE}/20260423_strawberry-8_breeze_lightened_720p_frames_fps10_method5_q60.webp`,
+  '10fps': `${BREEZE_ANIM_BASE}/20260423_strawberry-8_breeze_lightened_720p_frames_fps10_method5_q60_512.webp`,
   '12fps': `${BREEZE_ANIM_BASE}/20260423_strawberry-8_breeze_lightened_720p_frames_fps12_method4_q80.webp`,
   '15fps': `${BREEZE_ANIM_BASE}/20260423_strawberry-8_breeze_lightened_720p_frames_fps15_method4_q80.webp`,
 };

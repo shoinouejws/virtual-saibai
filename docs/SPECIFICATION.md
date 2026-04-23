@@ -751,7 +751,7 @@ virtual-saibai/
 │               ├── 20260420_strawberry-8.png   # 本番静止（STRAWBERRY_STAGE8_STATIC）
 │               ├── animation/           # 風アニメ（10/12/15fps は Animated WebP、6.7fps は軽量 PNG）
 │               │   ├── strawberry-8_breeze_150ms.png
-│               │   ├── 20260423_strawberry-8_breeze_lightened_720p_frames_fps10_method5_q60.webp
+│               │   ├── 20260423_strawberry-8_breeze_lightened_720p_frames_fps10_method5_q60_512.webp
 │               │   ├── 20260423_strawberry-8_breeze_lightened_720p_frames_fps12_method4_q80.webp
 │               │   ├── 20260423_strawberry-8_breeze_lightened_720p_frames_fps15_method4_q80.webp
 │               ├── strawberry-8.png   # レガシー・参照
